@@ -1,6 +1,7 @@
-import { Bolt, Zap } from 'lucide-react';
+import { Zap } from 'lucide-react';
 
 import { CommandCenter } from '@/components/command-center';
+import { DashboardWidgets } from '@/components/dashboard-widgets';
 import { MonthlyOutflowCard } from '@/components/monthly-outflow-card';
 import { Button } from '@/components/ui/button';
 import {
@@ -91,6 +92,7 @@ export default function Home() {
       <main className="ml-64 grid grid-cols-12 gap-6 p-8">
         <section className="col-span-8 flex flex-col gap-6">
           <MonthlyOutflowCard />
+          <DashboardWidgets />
         </section>
 
         <aside className="col-span-4 flex flex-col gap-4">

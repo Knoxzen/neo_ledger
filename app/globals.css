@@ -128,3 +128,35 @@
     @apply font-sans;
   }
 }
+
+@keyframes neo-scanline {
+  0% {
+    transform: translateY(-120%);
+    opacity: 0;
+  }
+  15% {
+    opacity: 0.35;
+  }
+  50% {
+    opacity: 0.2;
+  }
+  100% {
+    transform: translateY(220%);
+    opacity: 0;
+  }
+}
+
+@keyframes neo-accent-pulse {
+  0% {
+    opacity: 0.35;
+    filter: saturate(1) brightness(1);
+  }
+  50% {
+    opacity: 0.75;
+    filter: saturate(1.4) brightness(1.2);
+  }
+  100% {
+    opacity: 0.35;
+    filter: saturate(1) brightness(1);
+  }
+}
