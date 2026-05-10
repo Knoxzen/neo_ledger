@@ -129,6 +129,13 @@
   }
 }
 
+/* Fluid horizontal padding for main content (mobile → desktop) */
+@layer utilities {
+  .neo-page-pad {
+    padding-inline: clamp(0.75rem, 4vw, 2rem);
+  }
+}
+
 @keyframes neo-scanline {
   0% {
     transform: translateY(-120%);

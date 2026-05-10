@@ -2,6 +2,7 @@
 
 import { useMemo, useState } from 'react';
 import { LayoutGroup, motion } from 'framer-motion';
+import type { LucideIcon } from 'lucide-react';
 import {
   Brain,
   CalendarDays,
@@ -22,7 +23,7 @@ interface DashboardBox {
   value: string;
   description: string;
   accent: string;
-  icon: React.ComponentType<{ className?: string }>;
+  icon: LucideIcon;
 }
 
 function getBoxIcon(id: DashboardBoxId) {
@@ -44,7 +45,9 @@ function getBoxIcon(id: DashboardBoxId) {
 
 function MiniIcon({ id, accent }: { id: DashboardBoxId; accent: string }) {
   const Icon = getBoxIcon(id);
-  return <Icon className="size-6" style={{ color: accent }} />;
+  return (
+    <Icon className="size-[clamp(1.125rem,3.5vw,1.5rem)]" style={{ color: accent }} />
+  );
 }
 
 function FullWidget({ box }: { box: DashboardBox }) {
@@ -55,9 +58,12 @@ function FullWidget({ box }: { box: DashboardBox }) {
         <div className="text-[12px] font-bold tracking-widest text-white/70">
           {box.name}
         </div>
-        <Icon className="size-6" style={{ color: box.accent }} />
+        <Icon
+          className="size-[clamp(1.125rem,3.5vw,1.5rem)] shrink-0"
+          style={{ color: box.accent }}
+        />
       </div>
-      <div className="mt-4 text-5xl font-black leading-none tracking-tight">
+      <div className="mt-3 text-[clamp(1.5rem,8vw,3rem)] font-black leading-none tracking-tight sm:mt-4 md:text-5xl">
         {box.value}
       </div>
       <div className="mt-3 text-[12px] font-medium text-white/60">
@@ -428,20 +434,23 @@ function DetailedAnalysis({ box }: { box: DashboardBox }) {
         }}
       />
 
-      <div className="flex items-start justify-between gap-6">
-        <div>
-          <div className="text-[12px] font-bold tracking-widest text-white/70">
+      <div className="flex flex-col items-start justify-between gap-4 sm:flex-row sm:items-start sm:gap-6">
+        <div className="min-w-0">
+          <div className="text-[clamp(10px,2.8vw,12px)] font-bold tracking-widest text-white/70">
             {box.name} // DETAIL
           </div>
-          <div className="mt-2 text-6xl font-black tracking-tight">
+          <div className="mt-2 wrap-break-word text-[clamp(2rem,10vw,3.75rem)] font-black tracking-tight">
             {box.value}
           </div>
         </div>
 
-        <div className="flex items-center gap-3">
-          <Icon className="size-8" style={{ color: box.accent }} />
+        <div className="flex shrink-0 items-center gap-2 sm:gap-3">
+          <Icon
+            className="size-[clamp(1.5rem,5vw,2rem)]"
+            style={{ color: box.accent }}
+          />
           <div
-            className="border-2 border-white px-3 py-2 text-[10px] font-bold tracking-widest text-black"
+            className="border-2 border-white px-2 py-1.5 text-[clamp(9px,2.5vw,10px)] font-bold tracking-widest text-black sm:px-3 sm:py-2"
             style={{ backgroundColor: box.accent }}
           >
             ACTIVE
@@ -449,21 +458,21 @@ function DetailedAnalysis({ box }: { box: DashboardBox }) {
         </div>
       </div>
 
-      <div className="mt-8 grid grid-cols-12 gap-6">
-        <div className="col-span-7 border-2 border-white bg-[#121212] p-6 shadow-[4px_4px_0px_0px_rgba(0,0,0,1)]">
-          <div className="text-[12px] font-bold tracking-widest text-white/60">
+      <div className="mt-6 grid grid-cols-1 gap-4 sm:mt-8 sm:gap-6 lg:grid-cols-12">
+        <div className="border-2 border-white bg-[#121212] p-[clamp(1rem,3vw,1.5rem)] shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] lg:col-span-7">
+          <div className="text-[clamp(10px,2.8vw,12px)] font-bold tracking-widest text-white/60">
             VISUALIZATION
           </div>
-          <div className="mt-4 h-[260px] border-2 border-white bg-[#050505] shadow-[4px_4px_0px_0px_rgba(0,0,0,1)]">
+          <div className="mt-4 min-h-[clamp(10rem,35vw,16.25rem)] border-2 border-white bg-[#050505] shadow-[4px_4px_0px_0px_rgba(0,0,0,1)]">
             <Visualization box={box} />
           </div>
         </div>
 
-        <div className="col-span-5 border-2 border-white bg-[#121212] p-6 shadow-[4px_4px_0px_0px_rgba(0,0,0,1)]">
-          <div className="text-[12px] font-bold tracking-widest text-white/60">
+        <div className="border-2 border-white bg-[#121212] p-[clamp(1rem,3vw,1.5rem)] shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] lg:col-span-5">
+          <div className="text-[clamp(10px,2.8vw,12px)] font-bold tracking-widest text-white/60">
             RECENT SIGNALS
           </div>
-          <div className="mt-4 space-y-3 text-[12px] text-white/70">
+          <div className="mt-4 space-y-3 text-[clamp(11px,2.8vw,12px)] text-white/70">
             <div className="border-2 border-white/30 p-3">
               - spike detected near “FOOD”
             </div>
@@ -542,12 +551,12 @@ export function DashboardWidgets() {
   return (
     <LayoutGroup>
       <div className="w-full">
-        <div className={cn(activeBox ? 'flex items-center gap-3' : '')}>
+        <div className={cn(activeBox ? 'flex flex-wrap items-center gap-2 sm:gap-3' : '')}>
           <div
             className={cn(
               activeBox
-                ? 'flex flex-1 gap-3 overflow-x-auto pb-2'
-                : 'grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-3'
+                ? 'flex min-w-0 flex-1 gap-2 overflow-x-auto pb-2 [-ms-overflow-style:none] scrollbar-none sm:gap-3 [&::-webkit-scrollbar]:hidden'
+                : 'grid grid-cols-1 gap-4 sm:grid-cols-2 sm:gap-6 lg:grid-cols-3'
             )}
           >
             {boxes.map((box) => {
@@ -566,7 +575,9 @@ export function DashboardWidgets() {
                     'shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] transition-colors',
                     'focus-visible:outline-none focus-visible:ring-0',
                     isActive ? 'border-[#BBFF00]' : 'hover:border-white/70',
-                    isRibbon ? 'size-16 p-0' : 'min-h-[180px] p-6'
+                    isRibbon
+                      ? 'size-[clamp(3.25rem,10vw,4rem)] p-0'
+                      : 'min-h-[clamp(10rem,28vw,11.25rem)] p-[clamp(1rem,3vw,1.5rem)]'
                   )}
                   style={{
                     boxShadow: isActive
@@ -611,14 +622,14 @@ export function DashboardWidgets() {
               onClick={() => setActiveBox(null)}
               className={cn(
                 'shrink-0',
-                'size-16 rounded-none border-4 border-white bg-[#121212]',
+                'size-[clamp(3.25rem,10vw,4rem)] rounded-none border-4 border-white bg-[#121212]',
                 'shadow-[4px_4px_0px_0px_rgba(0,0,0,1)]',
                 'hover:border-[#FF00FF] transition-colors',
                 'active:translate-x-[2px] active:translate-y-[2px] active:shadow-none'
               )}
               aria-label="Close focus view"
             >
-              <X className="mx-auto size-7 text-white" />
+              <X className="mx-auto size-[clamp(1.25rem,4vw,1.75rem)] text-white" />
             </button>
           ) : null}
         </div>
@@ -628,9 +639,10 @@ export function DashboardWidgets() {
             initial={{ opacity: 0, y: 18 }}
             animate={{ opacity: 1, y: 0 }}
             className={cn(
-              'mt-6 h-[560px] w-full',
-              'rounded-none border-4 border-white bg-[#050505] p-10',
-              'shadow-[4px_4px_0px_0px_rgba(0,0,0,1)]'
+              'mt-4 min-h-[min(85vh,35rem)] w-full sm:mt-6',
+              'rounded-none border-4 border-white bg-[#050505] p-[clamp(1rem,4vw,2.5rem)]',
+              'shadow-[4px_4px_0px_0px_rgba(0,0,0,1)]',
+              'lg:min-h-[560px]'
             )}
           >
             <DetailedAnalysis box={active} />
