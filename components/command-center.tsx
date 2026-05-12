@@ -156,8 +156,9 @@ export function CommandCenter() {
           onClick={() => void handleSubmit()}
           disabled={!canSubmit}
           className={([
-            'w-full rounded-none border-2 border-white py-[clamp(1rem,4vw,1.75rem)]',
-            'text-[clamp(1rem,5vw,1.5rem)] font-black tracking-tight md:text-2xl',
+            'fixed bottom-[clamp(1rem,5vw,2rem)] right-[clamp(1rem,5vw,2rem)] z-50',
+            'w-auto rounded-none border-2 border-white px-[clamp(1.25rem,4vw,2rem)] py-[clamp(0.75rem,3vw,1.25rem)]',
+            'text-[clamp(0.875rem,4vw,1.25rem)] font-black tracking-tight md:text-xl',
             'shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] transition-all',
             'focus-visible:ring-0 focus-visible:ring-offset-0',
             canSubmit
@@ -167,7 +168,7 @@ export function CommandCenter() {
         >
           <span className="inline-flex items-center justify-center gap-2 sm:gap-3">
             <Zap className="size-[clamp(1rem,4vw,1.5rem)]" />
-            <span className="whitespace-normal text-center uppercase leading-tight">
+            <span className="whitespace-nowrap uppercase leading-tight">
               TRACK TRANSACTION
             </span>
           </span>

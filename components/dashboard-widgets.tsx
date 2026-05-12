@@ -63,7 +63,7 @@ function FullWidget({ box }: { box: DashboardBox }) {
           style={{ color: box.accent }}
         />
       </div>
-      <div className="mt-3 text-[clamp(1.5rem,8vw,3rem)] font-black leading-none tracking-tight sm:mt-4 md:text-5xl">
+      <div className="mt-3 break-all text-[clamp(1.5rem,8vw,3rem)] font-black leading-none tracking-tight sm:mt-4 md:text-5xl">
         {box.value}
       </div>
       <div className="mt-3 text-[12px] font-medium text-white/60">
@@ -439,7 +439,7 @@ function DetailedAnalysis({ box }: { box: DashboardBox }) {
           <div className="text-[clamp(10px,2.8vw,12px)] font-bold tracking-widest text-white/70">
             {box.name} // DETAIL
           </div>
-          <div className="mt-2 wrap-break-word text-[clamp(2rem,10vw,3.75rem)] font-black tracking-tight">
+          <div className="mt-2 break-all text-[clamp(2rem,10vw,3.75rem)] font-black tracking-tight">
             {box.value}
           </div>
         </div>
@@ -550,7 +550,12 @@ export function DashboardWidgets() {
 
   return (
     <LayoutGroup>
-      <div className="w-full">
+      <motion.div
+        initial={{ opacity: 0 }}
+        animate={{ opacity: 1 }}
+        transition={{ delay: 1, duration: 1, ease: 'easeOut' }}
+        className="w-full"
+      >
         <div className={cn(activeBox ? 'flex flex-wrap items-center gap-2 sm:gap-3' : '')}>
           <div
             className={cn(
@@ -569,6 +574,9 @@ export function DashboardWidgets() {
                   key={box.id}
                   type="button"
                   onClick={() => setActiveBox(box.id)}
+                  transition={{
+                    layout: { type: 'spring', stiffness: 350, damping: 35 },
+                  }}
                   className={cn(
                     'relative shrink-0 cursor-pointer select-none text-left',
                     'rounded-none border-4 border-white bg-[#121212]',
@@ -636,8 +644,14 @@ export function DashboardWidgets() {
 
         {active ? (
           <motion.div
-            initial={{ opacity: 0, y: 18 }}
+            initial={{ opacity: 0, y: 24 }}
             animate={{ opacity: 1, y: 0 }}
+            transition={{
+              type: 'spring',
+              stiffness: 400,
+              damping: 30,
+              opacity: { duration: 0.4 },
+            }}
             className={cn(
               'mt-4 min-h-[min(85vh,35rem)] w-full sm:mt-6',
               'rounded-none border-4 border-white bg-[#050505] p-[clamp(1rem,4vw,2.5rem)]',
@@ -648,7 +662,7 @@ export function DashboardWidgets() {
             <DetailedAnalysis box={active} />
           </motion.div>
         ) : null}
-      </div>
+      </motion.div>
     </LayoutGroup>
   );
 }
