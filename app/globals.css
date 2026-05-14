@@ -120,12 +120,16 @@
 @layer base {
   * {
     @apply border-border outline-ring/50;
+    caret-color: transparent;
   }
   body {
     @apply bg-background text-foreground overflow-x-hidden h-full;
   }
   html {
     @apply font-sans h-full overflow-hidden;
+  }
+  input, textarea, [contenteditable="true"] {
+    caret-color: auto;
   }
 }
 
@@ -204,4 +208,26 @@
     opacity: 0.35;
     filter: saturate(1) brightness(1);
   }
+}
+
+.scanline-overlay {
+  background: linear-gradient(
+    to bottom,
+    transparent 50%,
+    rgba(187, 255, 0, 0.05) 50%
+  );
+  background-size: 100% 4px;
+}
+
+@keyframes neo-glitch {
+  0% { transform: translate(0); }
+  20% { transform: translate(-2px, 2px); }
+  40% { transform: translate(-2px, -2px); }
+  60% { transform: translate(2px, 2px); }
+  80% { transform: translate(2px, -2px); }
+  100% { transform: translate(0); }
+}
+
+.animate-neo-glitch {
+  animation: neo-glitch 0.2s cubic-bezier(.25,.46,.45,.94) both infinite;
 }

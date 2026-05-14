@@ -1,6 +1,8 @@
 'use client';
 
 import { useCallback, useEffect, useState } from 'react';
+import Link from 'next/link';
+import { usePathname } from 'next/navigation';
 import { Menu, X, History } from 'lucide-react';
 
 import { Button } from '@/components/ui/button';
@@ -12,9 +14,11 @@ import {
   DrawerTrigger,
 } from '@/components/ui/drawer';
 import { RecentLogs } from '@/components/recent-logs';
+import { ExecuteBar } from '@/components/terminal/execute-bar';
 import { cn } from '@/lib/utils';
 
 export function DashboardChrome({ children }: { children: React.ReactNode }) {
+  const pathname = usePathname();
   const [navOpen, setNavOpen] = useState(false);
   const [historyOpen, setHistoryOpen] = useState(false);
 
@@ -40,6 +44,14 @@ export function DashboardChrome({ children }: { children: React.ReactNode }) {
     };
   }, [navOpen, historyOpen, closeNav]);
 
+  const navItems = [
+    { label: 'DASHBOARD', href: '/' },
+    { label: 'ANALYTICS', href: '/analytics' },
+    { label: 'BUDGET', href: '/budget' },
+    { label: 'WALLETS', href: '/wallets' },
+    { label: 'SETTINGS', href: '/settings' },
+  ];
+
   return (
     <div className="flex h-screen w-full overflow-hidden bg-[#050505] text-white">
       {/* Mobile Nav overlay */}
@@ -56,8 +68,8 @@ export function DashboardChrome({ children }: { children: React.ReactNode }) {
       {/* Sidebar */}
       <aside
         className={cn(
-          'fixed left-0 top-0 z-50 flex h-full w-[min(18rem,88vw)] flex-col border-r-2 border-white bg-[#050505] px-[clamp(0.75rem,3vw,1rem)] pb-24 pt-[clamp(0.75rem,3vw,1rem)] shadow-[4px_0px_0px_0px_rgba(0,0,0,1)] transition-transform duration-200 ease-out sm:w-64 lg:static lg:z-0 lg:translate-x-0',
-          navOpen ? 'translate-x-0' : '-translate-x-full lg:translate-x-0'
+          'fixed left-0 top-0 z-50 flex h-full w-[min(18rem,88vw)] flex-col border-r-2 border-white bg-[#050505] px-[clamp(0.75rem,3vw,1rem)] pb-24 pt-[clamp(0.75rem,3vw,1rem)] shadow-[4px_0px_0px_0px_rgba(0,0,0,1)] transition-transform duration-200 ease-out sm:static sm:z-0 sm:w-64 sm:translate-x-0',
+          navOpen ? 'translate-x-0' : '-translate-x-full sm:translate-x-0'
         )}
       >
         <div className="mb-[clamp(1rem,3vw,2rem)] flex items-start justify-between gap-3 pr-1">
@@ -71,7 +83,7 @@ export function DashboardChrome({ children }: { children: React.ReactNode }) {
           </div>
           <button
             type="button"
-            className="shrink-0 rounded-none border-2 border-white bg-[#121212] p-2 hover:bg-white/10 lg:hidden"
+            className="shrink-0 rounded-none border-2 border-white bg-[#121212] p-2 hover:bg-white/10 sm:hidden"
             onClick={closeNav}
             aria-label="Close menu"
           >
@@ -80,23 +92,24 @@ export function DashboardChrome({ children }: { children: React.ReactNode }) {
         </div>
 
         <nav className="no-scrollbar flex flex-[1_1_auto] flex-col gap-2 overflow-y-auto">
-          <a
-            className="translate-x-px translate-y-px border-2 border-white bg-[#BBFF00] px-[clamp(0.75rem,3vw,1rem)] py-[clamp(0.5rem,2vw,0.75rem)] text-[clamp(10px,2.8vw,12px)] font-bold tracking-widest text-black shadow-none"
-            href="#"
-            onClick={closeNav}
-          >
-            DASHBOARD
-          </a>
-          {['ANALYTICS', 'BUDGET', 'WALLETS', 'SETTINGS'].map((label) => (
-            <a
-              key={label}
-              className="border-2 border-transparent px-[clamp(0.75rem,3vw,1rem)] py-[clamp(0.5rem,2vw,0.75rem)] text-[clamp(10px,2.8vw,12px)] font-bold tracking-widest text-white/80 hover:border-white hover:bg-white/5"
-              href="#"
-              onClick={closeNav}
-            >
-              {label}
-            </a>
-          ))}
+          {navItems.map((item) => {
+            const isActive = pathname === item.href;
+            return (
+              <Link
+                key={item.label}
+                href={item.href}
+                onClick={closeNav}
+                className={cn(
+                  'border-2 px-[clamp(0.75rem,3vw,1rem)] py-[clamp(0.5rem,2vw,0.75rem)] text-[clamp(10px,2.8vw,12px)] font-bold tracking-widest transition-all',
+                  isActive
+                    ? 'translate-x-px translate-y-px border-white bg-[#BBFF00] text-black shadow-none'
+                    : 'border-transparent text-white/80 hover:border-white hover:bg-white/5'
+                )}
+              >
+                {item.label}
+              </Link>
+            );
+          })}
         </nav>
 
         <div className="absolute bottom-[max(0.75rem,env(safe-area-inset-bottom))] left-[clamp(0.75rem,3vw,1rem)] right-[clamp(0.75rem,3vw,1rem)] border-t-2 border-white/20 pt-4 lg:static lg:mt-auto lg:border-t-2 lg:px-0">
@@ -124,14 +137,14 @@ export function DashboardChrome({ children }: { children: React.ReactNode }) {
             <div className="flex min-w-0 flex-1 items-center gap-2 sm:gap-4">
               <Button
                 type="button"
-                className="shrink-0 rounded-none border-2 border-white bg-[#121212] px-3 py-2 text-white hover:bg-white/10 lg:hidden"
+                className="shrink-0 rounded-none border-2 border-white bg-[#121212] px-3 py-2 text-white hover:bg-white/10 sm:hidden"
                 onClick={() => setNavOpen(true)}
                 aria-label="Open menu"
               >
                 <Menu className="size-5" />
               </Button>
-              <div className="min-w-0 text-[clamp(1.125rem,4.5vw,2.25rem)] font-black tracking-tight uppercase leading-none">
-                NEO_LEDGER
+              <div className="min-w-0 text-[clamp(1.125rem,4.5vw,2.25rem)] font-black tracking-tight uppercase leading-none text-[#BBFF00]">
+                {pathname === '/analytics' ? 'NEO_ANALYTICS' : 'NEO_LEDGER'}
               </div>
               <div className="hidden items-center gap-2 border border-white bg-[#121212] px-2 py-1 sm:flex sm:px-3">
                 <div className="h-2 w-2 shrink-0 bg-[#BBFF00] animate-pulse" />
@@ -164,6 +177,10 @@ export function DashboardChrome({ children }: { children: React.ReactNode }) {
                   </div>
                 </DrawerContent>
               </Drawer>
+
+              <div className="hidden lg:block mr-4">
+                <ExecuteBar />
+              </div>
 
               <span className="hidden text-[clamp(10px,2vw,12px)] font-bold tracking-widest md:inline">
                 NOTIFS
