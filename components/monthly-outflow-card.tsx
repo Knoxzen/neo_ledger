@@ -1,8 +1,6 @@
 'use client';
 
 import { Card, CardContent } from '@/components/ui/card';
-import { Zap } from 'lucide-react';
-
 import { Progress } from '@/components/ui/progress';
 
 interface MonthlyOutflowCardProps {
@@ -24,33 +22,33 @@ export function MonthlyOutflowCard({
 
   return (
     <Card className="rounded-none border-2 border-white bg-[#121212] shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] ring-0">
-      <CardContent className="p-8">
-        <div className="flex items-start justify-between">
-          <span className="text-[12px] font-bold tracking-widest text-white/70">
+      <CardContent className="p-[clamp(1rem,3.5vw,2rem)]">
+        <div className="flex flex-wrap items-start justify-between gap-x-4 gap-y-2">
+          <span className="text-[clamp(10px,2.8vw,12px)] font-bold tracking-widest text-white/70">
             {totalLabel}
           </span>
-          <span className="text-[12px] font-bold tracking-widest text-white/50">
+          <span className="text-[clamp(10px,2.8vw,12px)] font-bold tracking-widest text-white/50">
             {monthLabel}
           </span>
         </div>
 
-        <div className="mt-3 text-[84px] font-black leading-none tracking-tight text-white">
+        <div className="mt-2 wrap-break-word font-black leading-none tracking-tight text-white sm:mt-3 text-[clamp(2rem,12vw+0.5rem,5.25rem)]">
           {totalValue}
         </div>
 
-        <div className="mt-6">
-          <div className="mb-2 flex items-center justify-between">
-            <span className="text-[12px] font-bold tracking-widest text-[#BBFF00]">
+        <div className="mt-4 sm:mt-6">
+          <div className="mb-2 flex flex-wrap items-center justify-between gap-x-3 gap-y-1">
+            <span className="text-[clamp(10px,2.8vw,12px)] font-bold tracking-widest text-[#BBFF00]">
               {budgetLabel}
             </span>
-            <span className="text-[12px] font-bold tracking-widest text-[#BBFF00]">
+            <span className="text-[clamp(10px,2.8vw,12px)] font-bold tracking-widest text-[#BBFF00]">
               {safePercent}% DEPLETED
             </span>
           </div>
 
           <Progress
             value={safePercent}
-            className="h-6 rounded-none border-2 border-white bg-[#050505] **:data-[slot=progress-indicator]:bg-[#BBFF00]"
+            className="h-[clamp(0.875rem,2.5vw,1.5rem)] rounded-none border-2 border-white bg-[#050505] **:data-[slot=progress-indicator]:bg-[#BBFF00]"
           />
         </div>
       </CardContent>
