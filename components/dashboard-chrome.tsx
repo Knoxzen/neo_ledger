@@ -17,20 +17,24 @@ import { RecentLogs } from '@/components/recent-logs';
 import { ExecuteBar } from '@/components/terminal/execute-bar';
 import { cn } from '@/lib/utils';
 
+import { LogoutModal } from '@/components/LogoutModal';
+
 export function DashboardChrome({ children }: { children: React.ReactNode }) {
   const pathname = usePathname();
   const [navOpen, setNavOpen] = useState(false);
   const [historyOpen, setHistoryOpen] = useState(false);
+  const [logoutModalOpen, setLogoutModalOpen] = useState(false);
 
   const closeNav = useCallback(() => setNavOpen(false), []);
 
   useEffect(() => {
-    if (!navOpen && !historyOpen) return;
+    if (!navOpen && !historyOpen && !logoutModalOpen) return;
 
     function onEscape(e: KeyboardEvent) {
       if (e.key === 'Escape') {
         closeNav();
         setHistoryOpen(false);
+        setLogoutModalOpen(false);
       }
     }
 
@@ -42,7 +46,7 @@ export function DashboardChrome({ children }: { children: React.ReactNode }) {
       window.removeEventListener('keydown', onEscape);
       document.body.style.overflow = prevOverflow;
     };
-  }, [navOpen, historyOpen, closeNav]);
+  }, [navOpen, historyOpen, logoutModalOpen, closeNav]);
 
   const navItems = [
     { label: 'DASHBOARD', href: '/' },
@@ -54,6 +58,7 @@ export function DashboardChrome({ children }: { children: React.ReactNode }) {
 
   return (
     <div className="flex h-screen w-full overflow-hidden bg-[#050505] text-white">
+      <LogoutModal isOpen={logoutModalOpen} onClose={() => setLogoutModalOpen(false)} />
       {/* Mobile Nav overlay */}
       <div
         role="presentation"
@@ -123,7 +128,10 @@ export function DashboardChrome({ children }: { children: React.ReactNode }) {
           <button
             type="button"
             className="mt-2 w-full px-4 py-3 text-left text-[clamp(10px,2.8vw,12px)] font-bold tracking-widest text-[#FF00FF] hover:bg-[#FF00FF]/10"
-            onClick={closeNav}
+            onClick={() => {
+              setLogoutModalOpen(true);
+              closeNav();
+            }}
           >
             LOGOUT
           </button>
