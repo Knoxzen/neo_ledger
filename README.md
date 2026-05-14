@@ -1,36 +1,82 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# NEO_LEDGER // AI EXPENSE TRACKER
 
-## Getting Started
+![NEO_LEDGER Banner](screenshots/dashboard.png)
 
-First, run the development server:
+## What are we making?
+**NEO_LEDGER** is a futuristic, high-performance expense tracking application designed with a high-contrast **Neo-Brutalism / Cyber-Pop** aesthetic. It leverages AI to parse natural language inputs into structured financial data, allowing users to track expenses by simply typing commands like `"50 credits for Ramen at Sector 7"`.
 
-```bash
-npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
-```
+## Why are we making it?
+Standard banking apps are often "Bank Blue" and sterile. NEO_LEDGER is built for those who want a **developer-centric, terminal-inspired interface** that feels alive. It's not just a tracker; it's a command center for your liquidity.
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+---
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+## 🚀 Key Features
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+### 1. Command Center (AI Parser)
+Type your transactions in plain English. The integrated AI engine extracts amounts, categories, and vendors instantly.
 
-## Learn More
+### 2. Neo-Analytics
+High-density data visualization using stepped line charts and category distribution treemaps.
+![Analytics](screenshots/analytics.png)
 
-To learn more about Next.js, take a look at the following resources:
+### 3. Flex Budget Protocols
+Segmented progress tracks for your budget categories. Features a reactive **Threat Level** system that alerts you to velocity anomalies.
+![Budget](screenshots/budget.png)
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+### 4. Liquid Asset Management (Wallets)
+Consolidated view of your bank accounts, crypto hardware, and investment portfolios with real-time sync logs.
+![Wallets](screenshots/wallets.png)
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+### 5. System Configuration
+Granular control over AI sensitivity thresholds and UI glitch effects (CRT scanlines, RGB shifts).
+![Settings](screenshots/settings.png)
 
-## Deploy on Vercel
+---
 
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
+## 🛠️ Tech Stack
+- **Frontend**: Next.js 15, Tailwind CSS 4, Framer Motion
+- **UI Components**: Custom shadcn/ui (Strict 0px radius)
+- **Icons**: Lucide React
+- **Backend**: Python (FastAPI/Pydantic) for AI Parsing
 
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+---
+
+## 🔓 Open Source & LLM Configuration
+NEO_LEDGER is fully open-source. To maintain privacy and flexibility, **users must configure their own LLM endpoint**.
+
+### Configuring your LLM:
+1. Navigate to the **Settings** page.
+2. Enter your `OPEN_AI_ENDPOINT_TOKEN` (or compatible provider).
+3. Adjust the `PARSING_AGGRESSION` and `FUZZY_MATCH_CONFIDENCE` to suit your needs.
+
+---
+
+## 📈 Future Goals
+- **Live Deployment**: Fully usable cloud-hosted version.
+- **Enhanced Auth**: Robust multi-factor authentication and role-based access.
+- **Android Application**: A native mobile experience using React Native, maintaining the same high-tech aesthetic.
+
+---
+
+## 🤝 Contribution Guide
+We welcome contributions from the community! Whether it's adding new "glitch" effects or improving the AI parsing logic.
+
+### How to contribute:
+1. **Fork the repo** and create your feature branch.
+2. **Follow the Style Guide**: 
+    - Use pure black `#000000` backgrounds.
+    - Strict `0px` border-radius.
+    - 2px white or neon borders.
+    - JetBrains Mono for data.
+3. **Submit a Pull Request**: Provide clear descriptions and screenshots of your changes.
+
+---
+
+## 🚦 Getting Started (Local Dev)
+1. Clone the repository.
+2. Navigate to `/frontend` and run `pnpm install`.
+3. Run the development server with `pnpm dev`.
+4. Navigate to `http://localhost:3000`.
+
+---
+*© 2026 NEO_LEDGER_CORP // TERMINAL_01*

@@ -97,8 +97,8 @@ export function CommandCenter() {
 
   return (
     <div className="relative overflow-hidden">
-      <div className="pointer-events-none absolute right-4 top-4 select-none text-white/10">
-        <BrainCircuit className="size-16" />
+      <div className="pointer-events-none absolute right-2 top-2 select-none text-white/10 sm:right-4 sm:top-4">
+        <BrainCircuit className="size-10 sm:size-14 lg:size-16" />
       </div>
 
       <div className="flex items-center justify-between gap-4">
@@ -156,8 +156,9 @@ export function CommandCenter() {
           onClick={() => void handleSubmit()}
           disabled={!canSubmit}
           className={([
-            'w-full rounded-none border-2 border-white py-6',
-            'text-2xl font-black tracking-tight',
+            'fixed bottom-[clamp(1rem,5vw,2rem)] right-[clamp(1rem,5vw,2rem)] z-50',
+            'w-auto rounded-none border-2 border-white px-[clamp(1.25rem,4vw,2rem)] py-[clamp(0.75rem,3vw,1.25rem)]',
+            'text-[clamp(0.875rem,4vw,1.25rem)] font-black tracking-tight md:text-xl',
             'shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] transition-all',
             'focus-visible:ring-0 focus-visible:ring-offset-0',
             canSubmit
@@ -165,9 +166,11 @@ export function CommandCenter() {
               : 'bg-[#BBFF00]/40 text-black/40 cursor-not-allowed hover:bg-[#BBFF00]/40',
           ]).join(' ')}
         >
-          <span className="inline-flex items-center justify-center gap-3">
-            <Zap className="size-6" />
-            TRACK TRANSACTION
+          <span className="inline-flex items-center justify-center gap-2 sm:gap-3">
+            <Zap className="size-[clamp(1rem,4vw,1.5rem)]" />
+            <span className="whitespace-nowrap uppercase leading-tight">
+              TRACK TRANSACTION
+            </span>
           </span>
         </Button>
 
@@ -182,53 +185,53 @@ export function CommandCenter() {
       </div>
 
       {status === 'review' && parsed ? (
-        <div className="mt-6 grid grid-cols-12 gap-4">
-          <Card className="col-span-6 rounded-none border-2 border-white bg-[#121212] shadow-[4px_4px_0px_0px_rgba(0,0,0,1)]">
-            <CardContent className="p-4">
-              <div className="text-[10px] font-bold tracking-widest text-white/60">
+        <div className="mt-6 grid grid-cols-1 gap-3 sm:grid-cols-2 sm:gap-4">
+          <Card className="rounded-none border-2 border-white bg-[#121212] shadow-[4px_4px_0px_0px_rgba(0,0,0,1)]">
+            <CardContent className="p-3 sm:p-4">
+              <div className="text-[clamp(9px,2.5vw,10px)] font-bold tracking-widest text-white/60">
                 AMOUNT
               </div>
-              <div className="mt-2 text-3xl font-black tracking-tight">
+              <div className="mt-2 text-[clamp(1.375rem,6vw,1.875rem)] font-black tracking-tight">
                 {String(parsed.amount ?? '—')}{' '}
-                <span className="text-white/60 text-lg">
+                <span className="text-white/60 text-base sm:text-lg">
                   {parsed.currency ?? ''}
                 </span>
               </div>
             </CardContent>
           </Card>
 
-          <Card className="col-span-6 rounded-none border-2 border-white bg-[#121212] shadow-[4px_4px_0px_0px_rgba(0,0,0,1)]">
-            <CardContent className="p-4">
-              <div className="text-[10px] font-bold tracking-widest text-white/60">
+          <Card className="rounded-none border-2 border-white bg-[#121212] shadow-[4px_4px_0px_0px_rgba(0,0,0,1)]">
+            <CardContent className="p-3 sm:p-4">
+              <div className="text-[clamp(9px,2.5vw,10px)] font-bold tracking-widest text-white/60">
                 CATEGORY
               </div>
               <Badge
-                className="mt-3 rounded-none border-2 border-white bg-[#FF00FF] px-3 py-1 text-[10px] font-bold tracking-widest text-black"
+                className="mt-3 rounded-none border-2 border-white bg-[#FF00FF] px-3 py-1 text-[clamp(9px,2.5vw,10px)] font-bold tracking-widest text-black"
               >
                 {(parsed.category ?? 'UNCLASSIFIED').toString().toUpperCase()}
               </Badge>
             </CardContent>
           </Card>
 
-          <Card className="col-span-6 rounded-none border-2 border-white bg-[#121212] shadow-[4px_4px_0px_0px_rgba(0,0,0,1)]">
-            <CardContent className="p-4">
-              <div className="text-[10px] font-bold tracking-widest text-white/60">
+          <Card className="rounded-none border-2 border-white bg-[#121212] shadow-[4px_4px_0px_0px_rgba(0,0,0,1)]">
+            <CardContent className="p-3 sm:p-4">
+              <div className="text-[clamp(9px,2.5vw,10px)] font-bold tracking-widest text-white/60">
                 VENDOR
               </div>
-              <div className="mt-2 text-2xl font-black tracking-tight">
+              <div className="mt-2 wrap-break-word text-[clamp(1.125rem,5vw,1.5rem)] font-black tracking-tight">
                 {parsed.vendor ?? '—'}
               </div>
             </CardContent>
           </Card>
 
-          <Card className="col-span-6 rounded-none border-2 border-white bg-[#121212] shadow-[4px_4px_0px_0px_rgba(0,0,0,1)]">
-            <CardContent className="p-4">
-              <div className="text-[10px] font-bold tracking-widest text-white/60">
+          <Card className="rounded-none border-2 border-white bg-[#121212] shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] sm:col-span-2">
+            <CardContent className="p-3 sm:p-4">
+              <div className="text-[clamp(9px,2.5vw,10px)] font-bold tracking-widest text-white/60">
                 CONFIRM
               </div>
               <Button
                 type="button"
-                className="mt-3 w-full rounded-none border-2 border-black bg-[#BBFF00] px-4 py-3 text-[12px] font-black tracking-widest text-black shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] hover:bg-[#BBFF00] focus-visible:ring-0 focus-visible:ring-offset-0 active:translate-x-[2px] active:translate-y-[2px] active:shadow-none transition-all"
+                className="mt-3 w-full rounded-none border-2 border-black bg-[#BBFF00] px-4 py-3 text-[clamp(10px,2.8vw,12px)] font-black tracking-widest text-black shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] hover:bg-[#BBFF00] focus-visible:ring-0 focus-visible:ring-offset-0 active:translate-x-[2px] active:translate-y-[2px] active:shadow-none transition-all"
               >
                 LOG TO LEDGER
               </Button>
