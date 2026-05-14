@@ -37,8 +37,12 @@ function normalizeParsedTransaction(payload: unknown): ParsedTransaction {
   return { raw: payload };
 }
 
+import { db } from '../services/db.service';
+import { useSync } from '../hooks/useSync';
+
 export function CommandCenter() {
   const textareaRef = useRef<HTMLTextAreaElement | null>(null);
+  const { sync } = useSync();
 
   const [status, setStatus] = useState<CommandCenterStatus>('idle');
   const [input, setInput] = useState<string>('');
@@ -50,8 +54,27 @@ export function CommandCenter() {
   }, []);
 
   const isBusy = status === 'processing';
-
   const canSubmit = useMemo(() => input.trim().length > 0 && !isBusy, [input, isBusy]);
+
+  async function handleLogToLedger() {
+    if (!parsed) return;
+    try {
+      await db.expenses.add({
+        amount: Number(parsed.amount) || 0,
+        currency: parsed.currency || 'USD',
+        category: (parsed.category || 'MISC').toString().toUpperCase(),
+        vendor: parsed.vendor || 'UNKNOWN',
+        date: new Date().toISOString(),
+        createdAt: Date.now(),
+        updatedAt: Date.now()
+      });
+      sync();
+      resetToIdle();
+      setInput('');
+    } catch (e) {
+      setError('FAILED_TO_LOG_TO_INDEXEDDB');
+    }
+  }
 
   async function handleSubmit() {
     if (!canSubmit) return;
@@ -60,26 +83,19 @@ export function CommandCenter() {
     setStatus('processing');
     setParsed(null);
 
-    try {
-      const res = await fetch('/api/parse', {
-        method: 'POST',
-        headers: { 'content-type': 'application/json' },
-        body: JSON.stringify({ text: input }),
+    // MOCK PARSE for local-first testing
+    setTimeout(() => {
+      const amountMatch = input.match(/\d+/);
+      const vendor = input.split(' ').pop() || 'VENDOR';
+      setParsed({
+        amount: amountMatch ? amountMatch[0] : 0,
+        currency: 'USD',
+        category: 'MISC',
+        vendor: vendor,
+        date: new Date().toISOString()
       });
-
-      if (!res.ok) {
-        const bodyText = await res.text().catch(() => '');
-        throw new Error(bodyText || `Parse failed (${res.status})`);
-      }
-
-      const payload = (await res.json()) as unknown;
-      setParsed(normalizeParsedTransaction(payload));
       setStatus('review');
-    } catch (e) {
-      const message = e instanceof Error ? e.message : 'Unknown error';
-      setError(message);
-      setStatus('idle');
-    }
+    }, 1000);
   }
 
   function handleKeyDown(e: KeyboardEvent<HTMLTextAreaElement>) {
@@ -218,7 +234,7 @@ export function CommandCenter() {
               <div className="text-[clamp(9px,2.5vw,10px)] font-bold tracking-widest text-white/60">
                 VENDOR
               </div>
-              <div className="mt-2 wrap-break-word text-[clamp(1.125rem,5vw,1.5rem)] font-black tracking-tight">
+              <div className="mt-2 wrap-break-word text-[clamp(1.125rem,5vw,1.5rem)] font-black tracking-tight uppercase">
                 {parsed.vendor ?? '—'}
               </div>
             </CardContent>
@@ -226,11 +242,9 @@ export function CommandCenter() {
 
           <Card className="rounded-none border-2 border-white bg-[#121212] shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] sm:col-span-2">
             <CardContent className="p-3 sm:p-4">
-              <div className="text-[clamp(9px,2.5vw,10px)] font-bold tracking-widest text-white/60">
-                CONFIRM
-              </div>
               <Button
                 type="button"
+                onClick={handleLogToLedger}
                 className="mt-3 w-full rounded-none border-2 border-black bg-[#BBFF00] px-4 py-3 text-[clamp(10px,2.8vw,12px)] font-black tracking-widest text-black shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] hover:bg-[#BBFF00] focus-visible:ring-0 focus-visible:ring-offset-0 active:translate-x-[2px] active:translate-y-[2px] active:shadow-none transition-all"
               >
                 LOG TO LEDGER

@@ -26,6 +26,7 @@ export default function RootLayout({
     <html lang="en" className={cn("h-full antialiased", "font-sans", geist.variable)}>
       <body className="min-h-full bg-[#050505] text-white font-mono">
         {children}
+        <script src="https://accounts.google.com/gsi/client" async defer></script>
       </body>
     </html>
   );

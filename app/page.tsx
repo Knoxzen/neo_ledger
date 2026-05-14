@@ -16,13 +16,22 @@ import {
   DrawerTitle,
   DrawerTrigger,
 } from '@/components/ui/drawer';
+import { useAuth } from '@/hooks/useAuth';
+import { LoginScreen } from '@/components/LoginScreen';
 
 export default function Home() {
+  const { isLoggedIn, user, login, logout } = useAuth();
   const [mounted, setMounted] = useState(false);
 
   useEffect(() => {
     setMounted(true);
   }, []);
+
+  if (!mounted) return null;
+
+  if (!isLoggedIn) {
+    return <LoginScreen />;
+  }
 
   return (
     <DashboardChrome>
