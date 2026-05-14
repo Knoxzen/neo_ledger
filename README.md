@@ -79,4 +79,4 @@ We welcome contributions from the community! Whether it's adding new "glitch" ef
 4. Navigate to `http://localhost:3000`.
 
 ---
-*© 2024 NEO_LEDGER_CORP // TERMINAL_01*
+*© 2026 NEO_LEDGER_CORP // TERMINAL_01*
