@@ -1,11 +1,11 @@
 'use client';
 
 import React from 'react';
-import { useLiveQuery } from 'dexie-react-hooks';
-import { db } from '../services/db.service';
+import { useTerminalData } from '../hooks/useTerminalData';
 
 export function RecentLogs() {
-  const expenses = useLiveQuery(() => db.expenses.reverse().toArray()) || [];
+  const { data, isLoading } = useTerminalData();
+  const expenses = data?.history || [];
 
   return (
     <div className="flex flex-col gap-4">
@@ -32,20 +32,20 @@ export function RecentLogs() {
               <div className="flex flex-wrap items-start justify-between gap-3">
                 <div className="min-w-0">
                   <div className="text-[clamp(1rem,4vw,1.125rem)] font-black tracking-tight uppercase">
-                    {item.vendor}
+                    {item.merchant}
                   </div>
                   <div className="text-[clamp(9px,2.5vw,10px)] font-bold tracking-widest text-white/60">
-                    {new Date(item.date).toLocaleString()}
+                    {new Date(item.timestamp || item.date).toLocaleString()}
                   </div>
                 </div>
                 <div className="shrink-0 text-[clamp(1rem,4vw,1.125rem)] font-black">
-                  -${item.amount.toLocaleString()}
+                  -${item.amount?.toLocaleString()}
                 </div>
               </div>
               <div
                 className="mt-3 inline-block border-2 border-white px-3 py-1 text-[clamp(9px,2.5vw,10px)] font-bold tracking-widest text-black bg-[#BBFF00]"
               >
-                {item.category}
+                {item.class || item.category}
               </div>
             </div>
           ))

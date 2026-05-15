@@ -38,11 +38,13 @@ function normalizeParsedTransaction(payload: unknown): ParsedTransaction {
 }
 
 import { db } from '../services/db.service';
-import { useSync } from '../hooks/useSync';
+import { useTerminalData } from '../hooks/useTerminalData';
+import { useAppStore } from '@/store/useAppStore';
 
 export function CommandCenter() {
   const textareaRef = useRef<HTMLTextAreaElement | null>(null);
-  const { sync } = useSync();
+  const { logTransaction, commitTransaction, refresh } = useTerminalData();
+  const { geminiApiKey } = useAppStore();
 
   const [status, setStatus] = useState<CommandCenterStatus>('idle');
   const [input, setInput] = useState<string>('');
@@ -57,22 +59,15 @@ export function CommandCenter() {
   const canSubmit = useMemo(() => input.trim().length > 0 && !isBusy, [input, isBusy]);
 
   async function handleLogToLedger() {
-    if (!parsed) return;
+    if (!parsed?.raw) return;
+    
     try {
-      await db.expenses.add({
-        amount: Number(parsed.amount) || 0,
-        currency: parsed.currency || 'USD',
-        category: (parsed.category || 'MISC').toString().toUpperCase(),
-        vendor: parsed.vendor || 'UNKNOWN',
-        date: new Date().toISOString(),
-        createdAt: Date.now(),
-        updatedAt: Date.now()
-      });
-      sync();
+      await commitTransaction(parsed.raw);
+      await refresh();
       resetToIdle();
       setInput('');
-    } catch (e) {
-      setError('FAILED_TO_LOG_TO_INDEXEDDB');
+    } catch (e: any) {
+      setError('COMMIT_FAILED_DRIVE_DISCONNECT');
     }
   }
 
@@ -83,19 +78,17 @@ export function CommandCenter() {
     setStatus('processing');
     setParsed(null);
 
-    // MOCK PARSE for local-first testing
-    setTimeout(() => {
-      const amountMatch = input.match(/\d+/);
-      const vendor = input.split(' ').pop() || 'VENDOR';
-      setParsed({
-        amount: amountMatch ? amountMatch[0] : 0,
-        currency: 'USD',
-        category: 'MISC',
-        vendor: vendor,
-        date: new Date().toISOString()
-      });
+    try {
+      if (!geminiApiKey) {
+        throw new Error('GEMINI_API_KEY_MISSING. PLEASE CONFIGURE IN SETTINGS_PAGE.');
+      }
+      const result = await logTransaction(input, geminiApiKey);
+      setParsed(normalizeParsedTransaction(result));
       setStatus('review');
-    }, 1000);
+    } catch (e: any) {
+      setError(e.message || 'AI_SYNTAX_ERROR_OR_AUTH_FAIL');
+      setStatus('idle');
+    }
   }
 
   function handleKeyDown(e: KeyboardEvent<HTMLTextAreaElement>) {
@@ -140,7 +133,7 @@ export function CommandCenter() {
       </div>
 
       <div className="mt-3 flex flex-col gap-4">
-        <div className="relative">
+        <div className="relative group">
           <Textarea
             id="command-center-input"
             ref={textareaRef}
@@ -148,47 +141,49 @@ export function CommandCenter() {
             onChange={(e) => setInput(e.target.value)}
             onKeyDown={handleKeyDown}
             placeholder={`ENTER TRANSACTION (E.G. '50 CREDITS FOR RAMEN AT SECTOR 7')`}
-            rows={3}
+            rows={4}
             className={([
-              'w-full resize-none bg-transparent p-4 text-white placeholder:text-white/35',
+              'w-full resize-none bg-transparent p-4 pb-16 text-white placeholder:text-white/35',
               'rounded-none border-2 border-white',
               'shadow-none ring-0 focus-visible:ring-0 focus-visible:ring-offset-0',
-              'transition-colors',
-              status === 'processing' ? 'border-[#BBFF00]' : 'focus-visible:border-[#BBFF00]',
+              'transition-all duration-300',
+              status === 'processing' ? 'border-[#BBFF00]' : 'focus-visible:border-[#BBFF00] focus-visible:bg-white/5',
             ]).join(' ')}
             aria-describedby={error ? 'command-center-error' : undefined}
             disabled={isBusy}
           />
 
+          <Button
+            type="button"
+            onClick={() => void handleSubmit()}
+            disabled={!canSubmit || status === 'review'}
+            className={([
+              'absolute bottom-3 right-3 z-10',
+              'w-auto rounded-none border-2 border-black px-4 py-2.5',
+              'text-sm font-bold tracking-tight',
+              'transition-all shadow-[4px_4px_0px_0px_rgba(0,0,0,1)]',
+              'focus-visible:ring-0 focus-visible:ring-offset-0',
+              canSubmit && status !== 'review'
+                ? 'bg-[#BBFF00] text-black hover:translate-x-[2px] hover:translate-y-[2px] hover:shadow-none'
+                : 'bg-white/10 text-white/20 cursor-not-allowed grayscale',
+            ]).join(' ')}
+          >
+            <span className="inline-flex items-center justify-center gap-2">
+              <Zap className={status === 'processing' ? 'animate-pulse' : ''} size={16} />
+              <span className="whitespace-nowrap uppercase">
+                {status === 'processing' ? 'PROCESSING' : 'TRACK'}
+              </span>
+            </span>
+          </Button>
+
           {status === 'processing' ? (
-            <div className="pointer-events-none absolute left-0 top-0 h-1 w-full overflow-hidden">
-              <div className="h-full w-full bg-[#BBFF00] animate-pulse" />
+            <div className="pointer-events-none absolute bottom-0 left-0 h-1.5 w-full overflow-hidden">
+              <div className="h-full w-full bg-[#BBFF00] animate-[shimmer_2s_infinite_linear] bg-[length:200%_100%] bg-gradient-to-r from-transparent via-white/50 to-transparent" />
             </div>
           ) : null}
         </div>
 
-        <Button
-          type="button"
-          onClick={() => void handleSubmit()}
-          disabled={!canSubmit}
-          className={([
-            'fixed bottom-[clamp(1rem,5vw,2rem)] right-[clamp(1rem,5vw,2rem)] z-50',
-            'w-auto rounded-none border-2 border-white px-[clamp(1.25rem,4vw,2rem)] py-[clamp(0.75rem,3vw,1.25rem)]',
-            'text-[clamp(0.875rem,4vw,1.25rem)] font-black tracking-tight md:text-xl',
-            'shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] transition-all',
-            'focus-visible:ring-0 focus-visible:ring-offset-0',
-            canSubmit
-              ? 'bg-[#BBFF00] text-black hover:bg-[#BBFF00] active:translate-x-[2px] active:translate-y-[2px] active:shadow-none'
-              : 'bg-[#BBFF00]/40 text-black/40 cursor-not-allowed hover:bg-[#BBFF00]/40',
-          ]).join(' ')}
-        >
-          <span className="inline-flex items-center justify-center gap-2 sm:gap-3">
-            <Zap className="size-[clamp(1rem,4vw,1.5rem)]" />
-            <span className="whitespace-nowrap uppercase leading-tight">
-              TRACK TRANSACTION
-            </span>
-          </span>
-        </Button>
+
 
         {error ? (
           <div
@@ -204,12 +199,12 @@ export function CommandCenter() {
         <div className="mt-6 grid grid-cols-1 gap-3 sm:grid-cols-2 sm:gap-4">
           <Card className="rounded-none border-2 border-white bg-[#121212] shadow-[4px_4px_0px_0px_rgba(0,0,0,1)]">
             <CardContent className="p-3 sm:p-4">
-              <div className="text-[clamp(9px,2.5vw,10px)] font-bold tracking-widest text-white/60">
+              <div className="text-[clamp(9px,2.5vw,10px)] font-bold tracking-widest text-white/40">
                 AMOUNT
               </div>
-              <div className="mt-2 text-[clamp(1.375rem,6vw,1.875rem)] font-black tracking-tight">
+              <div className="mt-1 text-[clamp(1.375rem,6vw,1.875rem)] font-black tracking-tight text-[#BBFF00]">
                 {String(parsed.amount ?? '—')}{' '}
-                <span className="text-white/60 text-base sm:text-lg">
+                <span className="text-white/40 text-base sm:text-lg">
                   {parsed.currency ?? ''}
                 </span>
               </div>
@@ -218,11 +213,11 @@ export function CommandCenter() {
 
           <Card className="rounded-none border-2 border-white bg-[#121212] shadow-[4px_4px_0px_0px_rgba(0,0,0,1)]">
             <CardContent className="p-3 sm:p-4">
-              <div className="text-[clamp(9px,2.5vw,10px)] font-bold tracking-widest text-white/60">
+              <div className="text-[clamp(9px,2.5vw,10px)] font-bold tracking-widest text-white/40">
                 CATEGORY
               </div>
               <Badge
-                className="mt-3 rounded-none border-2 border-white bg-[#FF00FF] px-3 py-1 text-[clamp(9px,2.5vw,10px)] font-bold tracking-widest text-black"
+                className="mt-2 rounded-none border-2 border-white bg-[#FF00FF] px-3 py-1 text-[clamp(9px,2.5vw,10px)] font-bold tracking-widest text-black shadow-[2px_2px_0px_0px_rgba(0,0,0,1)]"
               >
                 {(parsed.category ?? 'UNCLASSIFIED').toString().toUpperCase()}
               </Badge>
@@ -231,10 +226,10 @@ export function CommandCenter() {
 
           <Card className="rounded-none border-2 border-white bg-[#121212] shadow-[4px_4px_0px_0px_rgba(0,0,0,1)]">
             <CardContent className="p-3 sm:p-4">
-              <div className="text-[clamp(9px,2.5vw,10px)] font-bold tracking-widest text-white/60">
+              <div className="text-[clamp(9px,2.5vw,10px)] font-bold tracking-widest text-white/40">
                 VENDOR
               </div>
-              <div className="mt-2 wrap-break-word text-[clamp(1.125rem,5vw,1.5rem)] font-black tracking-tight uppercase">
+              <div className="mt-1 wrap-break-word text-[clamp(1.125rem,5vw,1.5rem)] font-black tracking-tight uppercase text-white/90">
                 {parsed.vendor ?? '—'}
               </div>
             </CardContent>
@@ -245,7 +240,7 @@ export function CommandCenter() {
               <Button
                 type="button"
                 onClick={handleLogToLedger}
-                className="mt-3 w-full rounded-none border-2 border-black bg-[#BBFF00] px-4 py-3 text-[clamp(10px,2.8vw,12px)] font-black tracking-widest text-black shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] hover:bg-[#BBFF00] focus-visible:ring-0 focus-visible:ring-offset-0 active:translate-x-[2px] active:translate-y-[2px] active:shadow-none transition-all"
+                className="w-full rounded-none border-2 border-black bg-[#BBFF00] px-4 py-3 text-sm font-black tracking-widest text-black shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] hover:translate-x-[2px] hover:translate-y-[2px] hover:shadow-none transition-all"
               >
                 LOG TO LEDGER
               </Button>

@@ -2,13 +2,12 @@
 
 import { Card, CardContent } from '@/components/ui/card';
 import { Progress } from '@/components/ui/progress';
-import { useLiveQuery } from 'dexie-react-hooks';
-import { db } from '../services/db.service';
+import { useTerminalData } from '../hooks/useTerminalData';
 
 export function MonthlyOutflowCard() {
-  const expenses = useLiveQuery(() => db.expenses.toArray()) || [];
-  const totalValue = expenses.reduce((sum, e) => sum + e.amount, 0);
-  const budgetUsedPercent = 0; // Logic for budget can be added later
+  const { data, isLoading } = useTerminalData();
+  const totalValue = data?.manifest?.total_burn || 0;
+  const budgetUsedPercent = data?.manifest?.burn_rate ? (totalValue / 5000) * 100 : 0; // Assuming 5000 as a soft limit for now
   const safePercent = Math.min(100, Math.max(0, budgetUsedPercent));
   const monthLabel = new Date().toLocaleString('default', { month: 'long', year: 'numeric' }).toUpperCase().replace(' ', '_');
 

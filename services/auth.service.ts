@@ -31,6 +31,10 @@ export class AuthService {
       accessToken: response.access_token,
       expiresAt,
     }));
+    
+    // Set cookie for API routes
+    document.cookie = `neo_access_token=${response.access_token}; path=/; max-age=${response.expires_in}; SameSite=Lax`;
+    
     window.dispatchEvent(new CustomEvent('NEO_AUTH_SUCCESS', { detail: response }));
   }
 
@@ -43,6 +47,7 @@ export class AuthService {
 
   logout() {
     localStorage.removeItem('NEO_AUTH');
+    document.cookie = "neo_access_token=; path=/; expires=Thu, 01 Jan 1970 00:00:00 GMT";
     window.location.reload();
   }
 

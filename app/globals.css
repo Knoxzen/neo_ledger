@@ -228,6 +228,15 @@
   100% { transform: translate(0); }
 }
 
-.animate-neo-glitch {
-  animation: neo-glitch 0.2s cubic-bezier(.25,.46,.45,.94) both infinite;
+@keyframes shimmer {
+  0% {
+    background-position: -200% 0;
+  }
+  100% {
+    background-position: 200% 0;
+  }
+}
+
+.animate-shimmer {
+  animation: shimmer 2s infinite linear;
 }

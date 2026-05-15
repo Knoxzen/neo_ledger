@@ -489,70 +489,64 @@ function DetailedAnalysis({ box }: { box: DashboardBox }) {
   );
 }
 
-import { useLiveQuery } from 'dexie-react-hooks';
-import { db } from '../services/db.service';
+import { useTerminalData } from '../hooks/useTerminalData';
 
 export function DashboardWidgets() {
   const [activeBox, setActiveBox] = useState<DashboardBoxId | null>(null);
-  
-  const expenses = useLiveQuery(() => db.expenses.toArray()) || [];
-  const budgets = useLiveQuery(() => db.budgets.toArray()) || [];
-
-  const totalSpent = expenses.reduce((sum, e) => sum + e.amount, 0);
-  const dailyAvg = expenses.length > 0 ? totalSpent / 30 : 0; // Simple 30 day avg
+  const { data, isLoading } = useTerminalData();
 
   const boxes = useMemo<DashboardBox[]>(
     () => [
       {
         id: 1,
         name: 'TOTAL BURN',
-        value: `$${totalSpent.toLocaleString()}`,
-        description: 'Total spending from local ledger.',
+        value: isLoading ? '...' : `$${(data?.manifest?.total_burn || 0).toLocaleString()}`,
+        description: 'Global spending from Drive ledger.',
         accent: '#BBFF00',
         icon: getBoxIcon(1),
       },
       {
         id: 2,
         name: 'DAILY AVG',
-        value: `$${dailyAvg.toLocaleString(undefined, { maximumFractionDigits: 0 })}/DAY`,
-        description: 'Average daily drop rate.',
+        value: isLoading ? '...' : `$${(data?.manifest?.burn_rate || 0).toLocaleString(undefined, { maximumFractionDigits: 0 })}/DAY`,
+        description: 'Average daily burn rate (Drive sync).',
         accent: '#FFFFFF',
         icon: getBoxIcon(2),
       },
       {
         id: 3,
         name: 'TOP FLEX',
-        value: 'LOCAL_DATA',
-        description: 'Highest spend category.',
+        value: isLoading ? '...' : (data?.history?.[0]?.merchant || 'PENDING'),
+        description: 'Last identified merchant grid.',
         accent: '#FF00FF',
         icon: getBoxIcon(3),
       },
       {
         id: 4,
-        name: 'BUDGET %',
-        value: budgets.length > 0 ? 'NOMINAL' : '0%',
-        description: 'Progress vs monthly limit.',
+        name: 'SYNC_STATUS',
+        value: isLoading ? 'SYNCING' : 'OPTIMAL',
+        description: 'Google Drive cloud link health.',
         accent: '#00FFFF',
         icon: getBoxIcon(4),
       },
       {
         id: 5,
-        name: 'AI INSIGHT',
-        value: 'STABLE',
-        description: `Local intelligence active.`,
+        name: 'THREAT_LEVEL',
+        value: isLoading ? '...' : (data?.manifest?.threat_level || 'STABLE'),
+        description: `AI determined risk factor.`,
         accent: '#FFA500',
         icon: getBoxIcon(5),
       },
       {
         id: 6,
         name: 'FORECAST',
-        value: 'PENDING',
-        description: 'Predictive analysis standby.',
+        value: 'ACTIVE',
+        description: 'Cloud-based predictive standby.',
         accent: '#7000FF',
         icon: getBoxIcon(6),
       },
     ],
-    [totalSpent, dailyAvg, budgets.length]
+    [data, isLoading]
   );
 
   const active = activeBox ? boxes.find((b) => b.id === activeBox) ?? null : null;
