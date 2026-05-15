@@ -18,6 +18,7 @@ export const viewport: Viewport = {
 };
 
 import { Toaster } from 'sonner';
+import { TerminalDataProvider } from '@/src/context/TerminalDataContext';
 
 export default function RootLayout({
   children,
@@ -27,7 +28,9 @@ export default function RootLayout({
   return (
     <html lang="en" className={cn("h-full antialiased", "font-sans", geist.variable)}>
       <body className="min-h-full bg-[#050505] text-white font-mono">
-        {children}
+        <TerminalDataProvider>
+          {children}
+        </TerminalDataProvider>
         <Toaster theme="dark" position="bottom-right" />
         <script src="https://accounts.google.com/gsi/client" async defer></script>
       </body>
