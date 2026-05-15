@@ -11,7 +11,34 @@ import { GlitchSwitch } from '@/components/terminal/glitch-switch';
 import { SystemHealth } from '@/components/terminal/system-health';
 import Image from 'next/image';
 
+import { useAppStore } from '@/store/useAppStore';
+import { useEffect, useState } from 'react';
+import { toast } from 'sonner';
+
 export default function SettingsPage() {
+  const { geminiApiKey, setGeminiApiKey, syncSettingsToDrive, loadSettingsFromDrive } = useAppStore();
+  const [localKey, setLocalKey] = useState(geminiApiKey || '');
+  const [isSaving, setIsSaving] = useState(false);
+
+  useEffect(() => {
+    loadSettingsFromDrive().then(() => {
+      setLocalKey(useAppStore.getState().geminiApiKey || '');
+    });
+  }, [loadSettingsFromDrive]);
+
+  async function handleSave() {
+    setIsSaving(true);
+    try {
+      setGeminiApiKey(localKey);
+      await syncSettingsToDrive();
+      toast.success('SETTINGS_COMMITTED_TO_CLOUD');
+    } catch (e) {
+      toast.error('SYNC_FAILED_CHECK_AUTH');
+    } finally {
+      setIsSaving(false);
+    }
+  }
+
   return (
     <DashboardChrome>
       <div className="flex flex-col gap-8 p-6 md:p-8 min-h-screen bg-[#000000]">
@@ -53,11 +80,11 @@ export default function SettingsPage() {
                   CONFIGURATION_MANIFEST / SYS.CONFIG
                 </h2>
                 <span className="text-[10px] font-black tracking-[0.2em] text-[#00FFFF] uppercase">
-                  [MODIFIED]
+                  [LIVE_SYNC_ENABLED]
                 </span>
               </div>
               <p className="text-[11px] font-medium leading-relaxed tracking-wide text-white/60 font-mono">
-                System-wide variables for the AI parsing engine. Caution: Altering sensitivity values may lead to high variance in ledger reconciliation.
+                System-wide variables for the AI parsing engine. Caution: Altering sensitivity values may lead to high variance in ledger reconciliation. API keys are encrypted and stored in your Google Drive AppData folder.
               </p>
             </div>
 
@@ -69,12 +96,17 @@ export default function SettingsPage() {
                </div>
                
                <ApiKeyInput 
-                 label="OPEN_AI_ENDPOINT_TOKEN" 
-                 value="sk-.........................................." 
+                 label="GOOGLE_AI_STUDIO_GEMINI_KEY" 
+                 value={localKey}
+                 onChange={setLocalKey}
+                 placeholder="ENTER_GEMINI_API_KEY_FROM_AI_STUDIO"
                />
+               
                <ApiKeyInput 
-                 label="BANK_AGGREGATOR_V3_SECRET" 
-                 value="ba-.........................................." 
+                 label="OPEN_AI_ENDPOINT_TOKEN (LEGACY)" 
+                 value=""
+                 onChange={() => {}}
+                 placeholder="SK-.........................................."
                />
             </div>
 
@@ -124,8 +156,12 @@ export default function SettingsPage() {
                </div>
             </div>
 
-            <Button className="w-full rounded-none border-2 border-white bg-white py-8 text-sm font-black tracking-[0.3em] text-black hover:bg-[#BBFF00] hover:border-[#BBFF00] transition-all shadow-[6px_6px_0px_0px_rgba(255,255,255,0.2)] active:translate-x-[2px] active:translate-y-[2px] active:shadow-none uppercase">
-              COMMIT_ALL_CHANGES
+            <Button 
+              onClick={handleSave}
+              disabled={isSaving}
+              className="w-full rounded-none border-2 border-white bg-white py-8 text-sm font-black tracking-[0.3em] text-black hover:bg-[#BBFF00] hover:border-[#BBFF00] transition-all shadow-[6px_6px_0px_0px_rgba(255,255,255,0.2)] active:translate-x-[2px] active:translate-y-[2px] active:shadow-none uppercase"
+            >
+              {isSaving ? 'SYNCING_TO_DRIVE...' : 'COMMIT_ALL_CHANGES'}
             </Button>
           </div>
         </div>

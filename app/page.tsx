@@ -14,15 +14,42 @@ import {
   DrawerContent,
   DrawerHeader,
   DrawerTitle,
+  DrawerDescription,
   DrawerTrigger,
 } from '@/components/ui/drawer';
+import { useAuth } from '@/hooks/useAuth';
+import { LoginScreen } from '@/components/LoginScreen';
+import { useAppStore } from '@/store/useAppStore';
 
 export default function Home() {
+  const { isLoggedIn, user, login, logout } = useAuth();
   const [mounted, setMounted] = useState(false);
+  const { loadSettingsFromDrive } = useAppStore();
 
   useEffect(() => {
     setMounted(true);
-  }, []);
+    loadSettingsFromDrive();
+    
+    // Sync cookie from localStorage to ensure server routes have access
+    const auth = localStorage.getItem('NEO_AUTH');
+    if (auth) {
+      try {
+        const { accessToken, expiresAt } = JSON.parse(auth);
+        if (accessToken && expiresAt > Date.now()) {
+          const maxAge = Math.floor((expiresAt - Date.now()) / 1000);
+          document.cookie = `neo_access_token=${accessToken}; path=/; max-age=${maxAge}; SameSite=Lax`;
+        }
+      } catch (e) {
+        console.error('COOKIE_SYNC_FAIL');
+      }
+    }
+  }, [loadSettingsFromDrive]);
+
+  if (!mounted) return null;
+
+  if (!isLoggedIn) {
+    return <LoginScreen />;
+  }
 
   return (
     <DashboardChrome>
@@ -54,10 +81,13 @@ export default function Home() {
               <DrawerTitle className="text-[clamp(10px,2.8vw,12px)] font-bold tracking-widest text-white/70">
                 COMMAND CENTER // ACTIVE_LOG
               </DrawerTitle>
+              <DrawerDescription className="sr-only">
+                Log a new transaction using natural language parsing.
+              </DrawerDescription>
             </DrawerHeader>
 
             <div className="px-[clamp(1rem,4vw,2rem)] pb-[max(1.5rem,env(safe-area-inset-bottom))]">
-              <div className="border-2 border-white bg-[#121212] p-[clamp(1rem,3vw,1.5rem)] shadow-[4px_4px_0px_0px_rgba(255,255,255,1)]">
+              <div className="rounded-none border-2 border-white bg-[#121212] p-[clamp(1rem,3vw,1.5rem)] shadow-[4px_4px_0px_0px_rgba(255,255,255,1)]">
                 <CommandCenter />
               </div>
               <div className="mt-4 text-center text-[clamp(9px,2.5vw,10px)] font-bold tracking-widest text-white/40">

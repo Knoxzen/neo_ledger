@@ -489,61 +489,64 @@ function DetailedAnalysis({ box }: { box: DashboardBox }) {
   );
 }
 
+import { useTerminalData } from '../hooks/useTerminalData';
+
 export function DashboardWidgets() {
   const [activeBox, setActiveBox] = useState<DashboardBoxId | null>(null);
+  const { data, isLoading } = useTerminalData();
 
   const boxes = useMemo<DashboardBox[]>(
     () => [
       {
         id: 1,
         name: 'TOTAL BURN',
-        value: '#42,900',
-        description: 'Total spending for current month.',
+        value: isLoading ? '...' : `$${(data?.manifest?.total_burn || 0).toLocaleString()}`,
+        description: 'Global spending from Drive ledger.',
         accent: '#BBFF00',
         icon: getBoxIcon(1),
       },
       {
         id: 2,
         name: 'DAILY AVG',
-        value: '#1,430/DAY',
-        description: 'Average daily drop rate.',
+        value: isLoading ? '...' : `$${(data?.manifest?.burn_rate || 0).toLocaleString(undefined, { maximumFractionDigits: 0 })}/DAY`,
+        description: 'Average daily burn rate (Drive sync).',
         accent: '#FFFFFF',
         icon: getBoxIcon(2),
       },
       {
         id: 3,
         name: 'TOP FLEX',
-        value: 'DINING',
-        description: 'Highest spend category.',
+        value: isLoading ? '...' : (data?.history?.[0]?.merchant || 'PENDING'),
+        description: 'Last identified merchant grid.',
         accent: '#FF00FF',
         icon: getBoxIcon(3),
       },
       {
         id: 4,
-        name: 'BUDGET %',
-        value: '84%',
-        description: 'Progress vs monthly limit.',
+        name: 'SYNC_STATUS',
+        value: isLoading ? 'SYNCING' : 'OPTIMAL',
+        description: 'Google Drive cloud link health.',
         accent: '#00FFFF',
         icon: getBoxIcon(4),
       },
       {
         id: 5,
-        name: 'AI INSIGHT',
-        value: '24% ↑',
-        description: `You’re up 24% on “COLLECTIBLES”.`,
+        name: 'THREAT_LEVEL',
+        value: isLoading ? '...' : (data?.manifest?.threat_level || 'STABLE'),
+        description: `AI determined risk factor.`,
         accent: '#FFA500',
         icon: getBoxIcon(5),
       },
       {
         id: 6,
         name: 'FORECAST',
-        value: '#51,200',
-        description: 'Predicted end-of-month.',
+        value: 'ACTIVE',
+        description: 'Cloud-based predictive standby.',
         accent: '#7000FF',
         icon: getBoxIcon(6),
       },
     ],
-    []
+    [data, isLoading]
   );
 
   const active = activeBox ? boxes.find((b) => b.id === activeBox) ?? null : null;
