@@ -1,7 +1,7 @@
 'use client';
 
 import { useMemo, useState } from 'react';
-import { LayoutGroup, motion } from 'framer-motion';
+import { AnimatePresence, LayoutGroup, motion } from 'framer-motion';
 import type { LucideIcon } from 'lucide-react';
 import {
   Brain,
@@ -11,9 +11,13 @@ import {
   Gauge,
   Radar,
   X,
+  Target,
+  Crosshair,
 } from 'lucide-react';
+import { PieChart, Pie, Cell, ResponsiveContainer } from 'recharts';
 
 import { cn } from '@/lib/utils';
+import { useTerminalData } from '../hooks/useTerminalData';
 
 type DashboardBoxId = 1 | 2 | 3 | 4 | 5 | 6;
 
@@ -26,6 +30,15 @@ interface DashboardBox {
   icon: LucideIcon;
 }
 
+const CATEGORY_COLORS: Record<string, string> = {
+  DINING: '#BBFF00',
+  FASHION: '#FF00FF',
+  TECH: '#00FFFF',
+  TRAVEL: '#FFFFFF',
+  ENTERTAINMENT: '#7000FF',
+  MISC: '#888888',
+};
+
 function getBoxIcon(id: DashboardBoxId) {
   switch (id) {
     case 1:
@@ -33,7 +46,7 @@ function getBoxIcon(id: DashboardBoxId) {
     case 2:
       return CalendarDays;
     case 3:
-      return Radar;
+      return Crosshair;
     case 4:
       return Gauge;
     case 5:
@@ -128,7 +141,6 @@ function LineChart({
   return (
     <svg viewBox={`0 0 ${width} ${height}`} className="h-full w-full">
       <rect x="0" y="0" width={width} height={height} fill="#050505" />
-      {/* grid */}
       {Array.from({ length: 5 }).map((_, idx) => {
         const y = padding + (idx * (height - padding * 2)) / 4;
         return (
@@ -198,129 +210,6 @@ function BarChart({
   );
 }
 
-function DonutChart({
-  segments,
-  accent,
-}: {
-  segments: { label: string; value: number; color: string }[];
-  accent: string;
-}) {
-  const width = 640;
-  const height = 240;
-  const cx = 160;
-  const cy = 120;
-  const rOuter = 86;
-  const rInner = 46;
-  const total = segments.reduce((sum, s) => sum + s.value, 0) || 1;
-  let start = -Math.PI / 2;
-
-  function arcPath(startAngle: number, endAngle: number) {
-    const large = endAngle - startAngle > Math.PI ? 1 : 0;
-    const x1 = cx + rOuter * Math.cos(startAngle);
-    const y1 = cy + rOuter * Math.sin(startAngle);
-    const x2 = cx + rOuter * Math.cos(endAngle);
-    const y2 = cy + rOuter * Math.sin(endAngle);
-
-    const x3 = cx + rInner * Math.cos(endAngle);
-    const y3 = cy + rInner * Math.sin(endAngle);
-    const x4 = cx + rInner * Math.cos(startAngle);
-    const y4 = cy + rInner * Math.sin(startAngle);
-
-    return [
-      `M ${x1} ${y1}`,
-      `A ${rOuter} ${rOuter} 0 ${large} 1 ${x2} ${y2}`,
-      `L ${x3} ${y3}`,
-      `A ${rInner} ${rInner} 0 ${large} 0 ${x4} ${y4}`,
-      'Z',
-    ].join(' ');
-  }
-
-  return (
-    <svg viewBox={`0 0 ${width} ${height}`} className="h-full w-full">
-      <rect x="0" y="0" width={width} height={height} fill="#050505" />
-      {segments.map((s) => {
-        const angle = (s.value / total) * Math.PI * 2;
-        const end = start + angle;
-        const path = arcPath(start, end);
-        start = end;
-        return <path key={s.label} d={path} fill={s.color} />;
-      })}
-      <circle cx={cx} cy={cy} r={rInner - 10} fill="#050505" />
-      <text
-        x={cx}
-        y={cy - 6}
-        textAnchor="middle"
-        fill={accent}
-        fontSize="18"
-        fontWeight="800"
-      >
-        TOP
-      </text>
-      <text
-        x={cx}
-        y={cy + 18}
-        textAnchor="middle"
-        fill="white"
-        fontSize="22"
-        fontWeight="900"
-      >
-        FLEX
-      </text>
-
-      {/* legend */}
-      <g transform="translate(300, 44)">
-        {segments.slice(0, 4).map((s, i) => (
-          <g key={s.label} transform={`translate(0, ${i * 38})`}>
-            <rect x="0" y="0" width="22" height="22" fill={s.color} />
-            <text
-              x="34"
-              y="17"
-              fill="white"
-              fontSize="14"
-              fontWeight="700"
-            >
-              {s.label}
-            </text>
-          </g>
-        ))}
-      </g>
-    </svg>
-  );
-}
-
-function GaugeChart({ percent, accent }: { percent: number; accent: string }) {
-  const width = 640;
-  const height = 240;
-  const cx = 200;
-  const cy = 190;
-  const r = 130;
-  const p = Math.min(100, Math.max(0, percent));
-  const start = Math.PI;
-  const end = Math.PI + (p / 100) * Math.PI;
-  const x1 = cx + r * Math.cos(start);
-  const y1 = cy + r * Math.sin(start);
-  const x2 = cx + r * Math.cos(end);
-  const y2 = cy + r * Math.sin(end);
-  const large = end - start > Math.PI ? 1 : 0;
-
-  const arc = `M ${x1} ${y1} A ${r} ${r} 0 ${large} 1 ${x2} ${y2}`;
-  const base = `M ${cx - r} ${cy} A ${r} ${r} 0 0 1 ${cx + r} ${cy}`;
-
-  return (
-    <svg viewBox={`0 0 ${width} ${height}`} className="h-full w-full">
-      <rect x="0" y="0" width={width} height={height} fill="#050505" />
-      <path d={base} stroke="rgba(255,255,255,0.18)" strokeWidth="16" fill="none" />
-      <path d={arc} stroke={accent} strokeWidth="16" fill="none" />
-      <text x={cx} y={120} textAnchor="middle" fill="white" fontSize="52" fontWeight="900">
-        {p.toFixed(0)}%
-      </text>
-      <text x={cx} y={150} textAnchor="middle" fill="rgba(255,255,255,0.65)" fontSize="14" fontWeight="700">
-        BUDGET UTILIZATION
-      </text>
-    </svg>
-  );
-}
-
 function Sparkline({ values, accent }: { values: number[]; accent: string }) {
   const width = 640;
   const height = 240;
@@ -371,7 +260,6 @@ function AreaChart({ values, accent }: { values: number[]; accent: string }) {
 }
 
 function Visualization({ box }: { box: DashboardBox }) {
-  // mock data for now — later we’ll bind to real API data.
   if (box.id === 1) {
     return (
       <LineChart
@@ -388,22 +276,13 @@ function Visualization({ box }: { box: DashboardBox }) {
       />
     );
   }
-  if (box.id === 3) {
-    return (
-      <DonutChart
-        accent={box.accent}
-        segments={[
-          { label: 'DINING', value: 32, color: '#FF00FF' },
-          { label: 'FOOD', value: 24, color: '#BBFF00' },
-          { label: 'TRANSIT', value: 18, color: '#00FFFF' },
-          { label: 'UTIL', value: 12, color: '#FFFFFF' },
-          { label: 'OTHER', value: 14, color: '#7000FF' },
-        ]}
-      />
-    );
-  }
   if (box.id === 4) {
-    return <GaugeChart accent={box.accent} percent={84} />;
+    const percent = 84;
+    return (
+      <div className="flex h-full items-center justify-center text-4xl font-black text-white">
+        {percent}%
+      </div>
+    );
   }
   if (box.id === 5) {
     return (
@@ -421,11 +300,72 @@ function Visualization({ box }: { box: DashboardBox }) {
   );
 }
 
-function DetailedAnalysis({ box }: { box: DashboardBox }) {
+function AllocationChart({ totals }: { totals: Record<string, number> }) {
+  const chartData = Object.entries(totals)
+    .filter(([_, value]) => value > 0)
+    .map(([name, value]) => ({
+      name,
+      value,
+      color: CATEGORY_COLORS[name] || '#888888'
+    }));
+
+  if (chartData.length === 0) {
+    return (
+      <div className="flex h-full items-center justify-center text-[10px] font-bold tracking-widest text-white/20">
+        NO_ALLOCATION_DATA
+      </div>
+    );
+  }
+
+  return (
+    <div className="h-[200px] w-full sm:h-[260px]">
+      <ResponsiveContainer width="100%" height="100%">
+        <PieChart>
+          <Pie
+            data={chartData}
+            cx="50%"
+            cy="50%"
+            innerRadius={60}
+            outerRadius={90}
+            paddingAngle={0}
+            dataKey="value"
+            stroke="#ffffff"
+            strokeWidth={2}
+            animationBegin={0}
+            animationDuration={1500}
+            animationEasing="ease-out"
+          >
+            {chartData.map((entry, index) => (
+              <Cell key={`cell-${index}`} fill={entry.color} />
+            ))}
+          </Pie>
+          <text
+            x="50%"
+            y="50%"
+            textAnchor="middle"
+            dominantBaseline="middle"
+            className="fill-white font-mono text-[9px] font-bold tracking-[0.2em]"
+          >
+            SYSTEM_ALLOCATION
+          </text>
+        </PieChart>
+      </ResponsiveContainer>
+    </div>
+  );
+}
+
+function DetailedAnalysis({ box, totals, onClose }: { box: DashboardBox; totals: Record<string, number>; onClose: () => void }) {
   const Icon = box.icon;
 
   return (
     <div className="relative h-full overflow-hidden">
+      <button
+        onClick={onClose}
+        className="absolute right-0 top-0 z-10 text-[10px] font-bold tracking-widest text-white/40 hover:text-[#FF00FF] transition-colors"
+      >
+        [ X_CLOSE_PROTOCOL ]
+      </button>
+
       <div
         className="pointer-events-none absolute inset-x-0 -top-10 h-20"
         style={{
@@ -459,41 +399,94 @@ function DetailedAnalysis({ box }: { box: DashboardBox }) {
       </div>
 
       <div className="mt-6 grid grid-cols-1 gap-4 sm:mt-8 sm:gap-6 lg:grid-cols-12">
-        <div className="border-2 border-white bg-[#121212] p-[clamp(1rem,3vw,1.5rem)] shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] lg:col-span-7">
+        <motion.div
+          initial={{ opacity: 0, x: -20 }}
+          animate={{ opacity: 1, x: 0 }}
+          transition={{ delay: 0.15 }}
+          className="border-2 border-white bg-[#121212] p-[clamp(1rem,3vw,1.5rem)] shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] lg:col-span-7"
+        >
           <div className="text-[clamp(10px,2.8vw,12px)] font-bold tracking-widest text-white/60">
             VISUALIZATION
           </div>
-          <div className="mt-4 min-h-[clamp(10rem,35vw,16.25rem)] border-2 border-white bg-[#050505] shadow-[4px_4px_0px_0px_rgba(0,0,0,1)]">
-            <Visualization box={box} />
+          <div className="mt-4 border-2 border-white bg-[#050505] shadow-[4px_4px_0px_0px_rgba(0,0,0,1)]">
+            {box.id === 3 ? <AllocationChart totals={totals} /> : <Visualization box={box} />}
           </div>
-        </div>
+        </motion.div>
 
-        <div className="border-2 border-white bg-[#121212] p-[clamp(1rem,3vw,1.5rem)] shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] lg:col-span-5">
+        <motion.div
+          initial={{ opacity: 0, x: 20 }}
+          animate={{ opacity: 1, x: 0 }}
+          transition={{ delay: 0.25 }}
+          className="border-2 border-white bg-[#121212] p-[clamp(1rem,3vw,1.5rem)] shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] lg:col-span-5"
+        >
           <div className="text-[clamp(10px,2.8vw,12px)] font-bold tracking-widest text-white/60">
-            RECENT SIGNALS
+            {box.id === 3 ? 'SYSTEM_LEGEND' : 'RECENT SIGNALS'}
           </div>
           <div className="mt-4 space-y-3 text-[clamp(11px,2.8vw,12px)] text-white/70">
-            <div className="border-2 border-white/30 p-3">
-              - spike detected near “FOOD”
-            </div>
-            <div className="border-2 border-white/30 p-3">
-              - vendor concentration trending up
-            </div>
-            <div className="border-2 border-white/30 p-3">
-              - variance increased week-over-week
-            </div>
+            {box.id === 3 ? (
+              Object.entries(totals)
+                .filter(([_, v]) => v > 0)
+                .map(([name, value], idx) => (
+                  <motion.div
+                    key={name}
+                    initial={{ opacity: 0, y: 10 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    transition={{ delay: 0.4 + idx * 0.05 }}
+                    className="flex items-center justify-between border-2 border-white/30 p-3"
+                  >
+                    <div className="flex items-center gap-3">
+                      <div className="size-3" style={{ backgroundColor: CATEGORY_COLORS[name] || '#888888' }} />
+                      <span className="font-bold tracking-widest">{name}</span>
+                    </div>
+                    <span className="font-mono text-[#BBFF00]">${value.toLocaleString()}</span>
+                  </motion.div>
+                ))
+            ) : (
+              <>
+                <div className="border-2 border-white/30 p-3">
+                  - spike detected near “FOOD”
+                </div>
+                <div className="border-2 border-white/30 p-3">
+                  - vendor concentration trending up
+                </div>
+                <div className="border-2 border-white/30 p-3">
+                  - variance increased week-over-week
+                </div>
+              </>
+            )}
           </div>
-        </div>
+        </motion.div>
       </div>
     </div>
   );
 }
 
-import { useTerminalData } from '../hooks/useTerminalData';
-
 export function DashboardWidgets() {
   const [activeBox, setActiveBox] = useState<DashboardBoxId | null>(null);
   const { data, isLoading } = useTerminalData();
+
+  const { topCategory, topCategoryTotal, topCategoryPercent, categoryTotals } = useMemo(() => {
+    const history = data?.history || [];
+    const totals = history.reduce((acc, tx) => {
+      const cat = tx.class || 'MISC';
+      acc[cat] = (acc[cat] || 0) + tx.amount;
+      return acc;
+    }, {} as Record<string, number>);
+
+    const top = Object.keys(totals).reduce((a, b) => 
+      totals[a] > totals[b] ? a : b, 'NONE'
+    );
+
+    const totalBurn = data?.manifest?.total_burn || 1;
+    const percent = Math.round((totals[top] / totalBurn) * 100);
+
+    return { 
+      topCategory: top, 
+      topCategoryTotal: totals[top] || 0,
+      topCategoryPercent: percent || 0,
+      categoryTotals: totals 
+    };
+  }, [data]);
 
   const boxes = useMemo<DashboardBox[]>(
     () => [
@@ -515,9 +508,9 @@ export function DashboardWidgets() {
       },
       {
         id: 3,
-        name: 'TOP FLEX',
-        value: isLoading ? '...' : (data?.history?.[0]?.merchant || 'PENDING'),
-        description: 'Last identified merchant grid.',
+        name: 'TOP_FLEX_PROTOCOL',
+        value: isLoading ? '...' : topCategory,
+        description: isLoading ? 'Computing...' : `$${topCategoryTotal.toLocaleString()} // ${topCategoryPercent}% OF TOTAL BURN`,
         accent: '#FF00FF',
         icon: getBoxIcon(3),
       },
@@ -546,7 +539,7 @@ export function DashboardWidgets() {
         icon: getBoxIcon(6),
       },
     ],
-    [data, isLoading]
+    [data, isLoading, topCategory, topCategoryTotal, topCategoryPercent]
   );
 
   const active = activeBox ? boxes.find((b) => b.id === activeBox) ?? null : null;
@@ -583,18 +576,20 @@ export function DashboardWidgets() {
                   className={cn(
                     'relative shrink-0 cursor-pointer select-none text-left',
                     'rounded-none border-4 border-white bg-[#121212]',
-                    'shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] transition-colors',
+                    'shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] transition-all duration-300',
                     'focus-visible:outline-none focus-visible:ring-0',
-                    isActive ? 'border-[#BBFF00]' : 'hover:border-white/70',
+                    'hover:shadow-[0_0_20px_var(--neon)] hover:border-white',
+                    isActive ? 'border-[#BBFF00]' : 'border-white/40',
                     isRibbon
                       ? 'size-[clamp(3.25rem,10vw,4rem)] p-0'
                       : 'min-h-[clamp(10rem,28vw,11.25rem)] p-[clamp(1rem,3vw,1.5rem)]'
                   )}
                   style={{
+                    '--neon': `${box.accent}44`,
                     boxShadow: isActive
                       ? `4px 4px 0px 0px ${box.accent}`
-                      : '4px 4px 0px 0px rgba(0,0,0,1)',
-                  }}
+                      : undefined,
+                  } as any}
                   aria-pressed={isActive}
                 >
                   {isActive ? (
@@ -645,28 +640,30 @@ export function DashboardWidgets() {
           ) : null}
         </div>
 
-        {active ? (
-          <motion.div
-            initial={{ opacity: 0, y: 24 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{
-              type: 'spring',
-              stiffness: 400,
-              damping: 30,
-              opacity: { duration: 0.4 },
-            }}
-            className={cn(
-              'mt-4 min-h-[min(85vh,35rem)] w-full sm:mt-6',
-              'rounded-none border-4 border-white bg-[#050505] p-[clamp(1rem,4vw,2.5rem)]',
-              'shadow-[4px_4px_0px_0px_rgba(0,0,0,1)]',
-              'lg:min-h-[560px]'
-            )}
-          >
-            <DetailedAnalysis box={active} />
-          </motion.div>
-        ) : null}
+        <AnimatePresence mode="wait">
+          {active ? (
+            <motion.div
+              key="detailed-view"
+              initial={{ opacity: 0, y: 40, scale: 0.95 }}
+              animate={{ opacity: 1, y: 0, scale: 1 }}
+              exit={{ opacity: 0, y: 20, scale: 0.95 }}
+              transition={{
+                type: 'spring',
+                stiffness: 450,
+                damping: 25,
+              }}
+              className={cn(
+                'mt-4 min-h-[min(85vh,35rem)] w-full sm:mt-6',
+                'rounded-none border-4 border-white bg-[#050505] p-[clamp(1rem,4vw,2.5rem)]',
+                'shadow-[4px_4px_0px_0px_rgba(0,0,0,1)]',
+                'lg:min-h-[560px]'
+              )}
+            >
+              <DetailedAnalysis box={active} totals={categoryTotals} onClose={() => setActiveBox(null)} />
+            </motion.div>
+          ) : null}
+        </AnimatePresence>
       </motion.div>
     </LayoutGroup>
   );
 }
-
