@@ -37,11 +37,13 @@ const handler = NextAuth({
     async jwt({ token, account }) {
       if (account) {
         token.accessToken = account.access_token;
+        token.loginDate = new Date().toISOString();
       }
       return token;
     },
     async session({ session, token }: any) {
       session.accessToken = token.accessToken;
+      session.user.loginDate = token.loginDate;
       return session;
     },
   },
