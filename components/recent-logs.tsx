@@ -35,7 +35,7 @@ export function RecentLogs() {
                     {item.merchant}
                   </div>
                   <div className="text-[clamp(9px,2.5vw,10px)] font-bold tracking-widest text-white/60">
-                    {new Date(item.timestamp || item.date).toLocaleString()}
+                    {new Date(item.timestamp).toLocaleString()}
                   </div>
                 </div>
                 <div className="shrink-0 text-[clamp(1rem,4vw,1.125rem)] font-black">
@@ -45,7 +45,7 @@ export function RecentLogs() {
               <div
                 className="mt-3 inline-block border-2 border-white px-3 py-1 text-[clamp(9px,2.5vw,10px)] font-bold tracking-widest text-black bg-[#BBFF00]"
               >
-                {item.class || item.category}
+                {item.class}
               </div>
             </div>
           ))

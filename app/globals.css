@@ -239,4 +239,4 @@
 
 .animate-shimmer {
   animation: shimmer 2s infinite linear;
-}
+}@keyframes neo-progress { 0% { transform: scaleX(0); } 50% { transform: scaleX(0.7); } 100% { transform: scaleX(1); } } .animate-neo-progress { animation: neo-progress 2s ease-in-out infinite; }

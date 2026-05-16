@@ -1,6 +1,7 @@
 'use client';
 
 import React, { createContext, useContext, useEffect, useState, useCallback, useMemo } from 'react';
+import { useSession } from 'next-auth/react';
 import { z } from 'zod';
 
 // --- SCHEMAS ---
@@ -54,6 +55,7 @@ const INITIAL_MANIFEST: Manifest = {
 };
 
 export function TerminalDataProvider({ children }: { children: React.ReactNode }) {
+  const { data: session, status } = useSession();
   const [state, setState] = useState<TerminalState>({
     manifest: INITIAL_MANIFEST,
     ledgerHistory: [],
@@ -64,32 +66,35 @@ export function TerminalDataProvider({ children }: { children: React.ReactNode }
     error: null,
   });
 
-  // Load from LocalStorage on mount
+  // 1. Hydrate from Cache
   useEffect(() => {
     const cached = localStorage.getItem(STORAGE_KEY);
     if (cached) {
       try {
         const parsed = JSON.parse(cached);
-        setState(prev => ({
-          ...prev,
-          ...parsed,
-          isHydrated: true
-        }));
+        setState(prev => ({ ...prev, ...parsed, isHydrated: true }));
       } catch (e) {
         console.error('CACHE_HYDRATION_FAILED');
       }
     }
-    // Then trigger background sync
-    fetchInitialData();
   }, []);
 
-  const fetchInitialData = async () => {
+  // 2. Sync with Drive when session is ready
+  useEffect(() => {
+    if (status === 'authenticated' && (session as any)?.accessToken) {
+      fetchInitialData();
+    }
+  }, [status, (session as any)?.accessToken]);
+
+  const fetchInitialData = useCallback(async () => {
+    const token = (session as any)?.accessToken;
+    if (!token) return;
+
     setState(prev => ({ ...prev, isSyncing: true }));
     try {
-      const auth = localStorage.getItem('NEO_AUTH');
-      const token = auth ? JSON.parse(auth).accessToken : null;
-      const headers: Record<string, string> = {};
-      if (token) headers['Authorization'] = `Bearer ${token}`;
+      const headers: Record<string, string> = {
+        'Authorization': `Bearer ${token}`
+      };
 
       const res = await fetch('/api/batch', { headers });
       if (!res.ok) throw new Error('FETCH_FAILED');
@@ -110,7 +115,7 @@ export function TerminalDataProvider({ children }: { children: React.ReactNode }
     } catch (err: any) {
       setState(prev => ({ ...prev, isSyncing: false, error: err.message }));
     }
-  };
+  }, [session?.accessToken]);
 
   const logTransaction = useCallback(async (input: string, apiKey?: string) => {
     // 1. Capture Snapshot for Rollback
@@ -147,8 +152,7 @@ export function TerminalDataProvider({ children }: { children: React.ReactNode }
     });
 
     try {
-      const auth = localStorage.getItem('NEO_AUTH');
-      const token = auth ? JSON.parse(auth).accessToken : null;
+      const token = (session as any)?.accessToken;
       const headers: Record<string, string> = { 'Content-Type': 'application/json' };
       if (token) headers['Authorization'] = `Bearer ${token}`;
       if (apiKey) headers['x-gemini-api-key'] = apiKey;
@@ -210,13 +214,19 @@ export function TerminalDataProvider({ children }: { children: React.ReactNode }
       localStorage.setItem(STORAGE_KEY, JSON.stringify(snapshot));
       setState(prev => ({ ...prev, error: 'ERROR_SYNC_FAILED', isSyncing: false }));
     }
-  }, [state]);
+  }, [state, session?.accessToken]);
 
   const value = useMemo(() => ({
+    data: {
+      manifest: state.manifest,
+      history: state.ledgerHistory,
+      settings: state.settings,
+    },
+    isLoading: state.isSyncing,
     ...state,
     logTransaction,
     refreshData: fetchInitialData
-  }), [state, logTransaction]);
+  }), [state, logTransaction, fetchInitialData]);
 
   return (
     <TerminalDataContext.Provider value={value}>

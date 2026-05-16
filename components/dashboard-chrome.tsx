@@ -49,7 +49,7 @@ export function DashboardChrome({ children }: { children: React.ReactNode }) {
   }, [navOpen, historyOpen, logoutModalOpen, closeNav]);
 
   const navItems = [
-    { label: 'DASHBOARD', href: '/' },
+    { label: 'DASHBOARD', href: '/dashboard' },
     { label: 'ANALYTICS', href: '/analytics' },
     { label: 'BUDGET', href: '/budget' },
     { label: 'WALLETS', href: '/wallets' },

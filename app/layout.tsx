@@ -17,8 +17,10 @@ export const viewport: Viewport = {
   viewportFit: 'cover',
 };
 
-import { Toaster } from 'sonner';
-import { TerminalDataProvider } from '@/src/context/TerminalDataContext';
+import { Providers } from '@/components/Providers';
+import { Suspense } from 'react';
+
+import { SystemLoader } from '@/components/SystemLoader';
 
 export default function RootLayout({
   children,
@@ -28,10 +30,11 @@ export default function RootLayout({
   return (
     <html lang="en" className={cn("h-full antialiased", "font-sans", geist.variable)}>
       <body className="min-h-full bg-[#050505] text-white font-mono">
-        <TerminalDataProvider>
-          {children}
-        </TerminalDataProvider>
-        <Toaster theme="dark" position="bottom-right" />
+        <Providers>
+          <Suspense fallback={<SystemLoader />}>
+            {children}
+          </Suspense>
+        </Providers>
         <script src="https://accounts.google.com/gsi/client" async defer></script>
       </body>
     </html>

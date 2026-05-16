@@ -1,24 +1,33 @@
-// hooks/useAuth.ts
-
-import { useEffect } from 'react';
+import { useSession, signIn, signOut } from 'next-auth/react';
 import { useAppStore } from '../store/useAppStore';
-import { authService } from '../services/auth.service';
+import { useEffect } from 'react';
 
 export function useAuth() {
+  const { data: session, status } = useSession();
   const { setAuth, isLoggedIn, user } = useAppStore();
 
   useEffect(() => {
-    const handleAuth = async (e: any) => {
-      const userInfo = await authService.fetchUserInfo(e.detail.access_token);
-      setAuth({ isLoggedIn: true, user: userInfo, accessToken: e.detail.access_token, expiresAt: Date.now() + 3600000 });
-    };
-    window.addEventListener('NEO_AUTH_SUCCESS', handleAuth);
-    if (authService.isTokenValid()) {
-      const stored = authService.getStoredToken();
-      authService.fetchUserInfo(stored.accessToken).then(u => setAuth({ isLoggedIn: true, user: u, accessToken: stored.accessToken, expiresAt: stored.expiresAt }));
+    if (status === 'authenticated' && session?.user) {
+      setAuth({
+        isLoggedIn: true,
+        user: {
+          name: session.user.name,
+          email: session.user.email,
+          image: session.user.image,
+        } as any,
+        accessToken: (session as any).accessToken,
+        expiresAt: Date.now() + 30 * 24 * 60 * 60 * 1000,
+      });
+    } else if (status === 'unauthenticated') {
+      setAuth({ isLoggedIn: false, user: null, accessToken: null, expiresAt: 0 });
     }
-    return () => window.removeEventListener('NEO_AUTH_SUCCESS', handleAuth);
-  }, [setAuth]);
+  }, [status, session, setAuth]);
 
-  return { isLoggedIn, user, login: () => authService.login(), logout: () => authService.logout() };
+  return {
+    isLoggedIn: status === 'authenticated',
+    user: session?.user || null,
+    status,
+    login: () => signIn('google'),
+    logout: () => signOut({ callbackUrl: '/' }),
+  };
 }

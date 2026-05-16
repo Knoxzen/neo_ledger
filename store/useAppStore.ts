@@ -24,7 +24,19 @@ export const useAppStore = create<AppStore>((set, get) => ({
   syncStatus: 'idle',
   lastBackupAt: null,
   geminiApiKey: null,
-  setAuth: (auth) => set({ isLoggedIn: auth.isLoggedIn, user: auth.user }),
+  setAuth: (auth) => {
+    set({ isLoggedIn: auth.isLoggedIn, user: auth.user });
+    if (auth.isLoggedIn && auth.accessToken) {
+      localStorage.setItem('NEO_AUTH', JSON.stringify({
+        accessToken: auth.accessToken,
+        expiresAt: auth.expiresAt,
+      }));
+      // Set cookie for server-side Google Drive API access
+      document.cookie = `neo_access_token=${auth.accessToken}; path=/; max-age=2592000; SameSite=Lax`;
+    } else if (!auth.isLoggedIn) {
+      localStorage.removeItem('NEO_AUTH');
+    }
+  },
   setSyncStatus: (status) => set({ syncStatus: status }),
   setLastBackupAt: (time) => set({ lastBackupAt: time }),
   setGeminiApiKey: (key) => set({ geminiApiKey: key }),
@@ -59,5 +71,9 @@ export const useAppStore = create<AppStore>((set, get) => ({
       console.error('SETTINGS_LOAD_FAILED');
     }
   },
-  logout: () => set({ isLoggedIn: false, user: null, geminiApiKey: null }),
+  logout: () => {
+    localStorage.removeItem('NEO_AUTH');
+    document.cookie = "nextauth.session-token=; path=/; expires=Thu, 01 Jan 1970 00:00:00 GMT";
+    set({ isLoggedIn: false, user: null, geminiApiKey: null });
+  },
 }));

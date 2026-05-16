@@ -547,9 +547,6 @@ export function DashboardWidgets() {
   return (
     <LayoutGroup>
       <motion.div
-        initial={{ opacity: 0 }}
-        animate={{ opacity: 1 }}
-        transition={{ delay: 1, duration: 1, ease: 'easeOut' }}
         className="w-full"
       >
         <div className={cn(activeBox ? 'flex flex-wrap items-center gap-2 sm:gap-3' : '')}>
