@@ -169,7 +169,7 @@ export default function SettingsPage() {
         {/* Footer */}
         <footer className="mt-auto pt-12 border-t border-white/10">
           <div className="flex flex-col md:flex-row justify-between items-center gap-4 text-[9px] font-bold tracking-[0.1em] text-white/30 uppercase font-mono">
-            <div>© 2024 NEO_LEDGER_CORP   ENCRYPTION: AES-256-GCM   UPTIME: 99.998%</div>
+            <div>© 2026 NEO_LEDGER_CORP   ENCRYPTION: AES-256-GCM   UPTIME: 99.998%</div>
             <div className="flex gap-4">
                <div className="h-3 w-3 bg-[#BBFF00]" />
                <div className="h-3 w-3 bg-[#FF00FF]" />

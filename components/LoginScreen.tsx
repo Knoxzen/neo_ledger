@@ -46,7 +46,7 @@ export function LoginScreen() {
         </button>
 
         <p className="mt-8 text-center text-[8px] font-bold tracking-widest text-white/20 uppercase">
-          © 2024 NEO_LEDGER_CORP // V.2.0.4-STABLE
+          © 2026 NEO_LEDGER_CORP // V.2.0.4-STABLE
         </p>
       </div>
     </div>
