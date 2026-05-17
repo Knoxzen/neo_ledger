@@ -26,6 +26,11 @@ export function DashboardChrome({ children }: { children: React.ReactNode }) {
   const [navOpen, setNavOpen] = useState(false);
   const [historyOpen, setHistoryOpen] = useState(false);
   const [logoutModalOpen, setLogoutModalOpen] = useState(false);
+  const [mounted, setMounted] = useState(false);
+
+  useEffect(() => {
+    setMounted(true);
+  }, []);
 
   const closeNav = useCallback(() => setNavOpen(false), []);
 
@@ -200,7 +205,7 @@ export function DashboardChrome({ children }: { children: React.ReactNode }) {
 
               <div className="group relative flex items-center">
                 <div className="size-8 rounded-none border-2 border-white bg-[#121212] overflow-hidden shrink-0 shadow-[2px_2px_0px_0px_rgba(255,255,255,0.3)] transition-all group-hover:border-[#BBFF00] group-hover:shadow-[0_0_10px_rgba(187,255,0,0.5)] flex items-center justify-center">
-                  {session?.user?.image && !imgError ? (
+                  {mounted && session?.user?.image && !imgError ? (
                     <img 
                       src={session.user.image} 
                       alt={session.user.name || 'User'} 
@@ -219,16 +224,16 @@ export function DashboardChrome({ children }: { children: React.ReactNode }) {
                         OPERATOR_PROFILE // ACTIVE
                       </div>
                       <div className="text-sm font-black uppercase tracking-tight text-white mb-1">
-                        {session?.user?.name || 'UNKNOWN_OPERATOR'}
+                        {mounted && session?.user?.name ? session.user.name : 'UNKNOWN_OPERATOR'}
                       </div>
                       <div className="text-[9px] font-bold text-white/50 tracking-widest mb-3">
-                        {session?.user?.email}
+                        {mounted && session?.user?.email ? session.user.email : '...'}
                       </div>
                       <div className="border-t border-white/10 pt-3">
                         <div className="flex justify-between items-center text-[9px] font-bold tracking-widest uppercase">
                           <span className="text-white/40">LOGIN_TIMESTAMP</span>
                           <span className="text-white">
-                            {(session?.user as any)?.loginDate 
+                            {(session?.user as any)?.loginDate && mounted
                               ? new Date((session?.user as any).loginDate).toLocaleString('en-US', {
                                   month: 'short',
                                   day: '2-digit',

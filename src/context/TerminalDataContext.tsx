@@ -42,6 +42,7 @@ interface TerminalState {
 interface TerminalContextType extends TerminalState {
   logTransaction: (input: string, apiKey?: string) => Promise<void>;
   refreshData: () => Promise<void>;
+  wipeoutData: () => Promise<void>;
 }
 
 const TerminalDataContext = createContext<TerminalContextType | undefined>(undefined);
@@ -219,6 +220,52 @@ export function TerminalDataProvider({ children }: { children: React.ReactNode }
     }
   }, [state, session?.accessToken]);
 
+  const wipeoutData = useCallback(async () => {
+    const token = (session as any)?.accessToken;
+    if (!token) throw new Error('NOT_AUTHENTICATED');
+
+    setState(prev => ({ ...prev, isSyncing: true }));
+    
+    // OPTIMISTIC RESET
+    const emptyState = {
+      manifest: INITIAL_MANIFEST,
+      ledgerHistory: [],
+    };
+    
+    setState(prev => {
+      const updated = { ...prev, ...emptyState };
+      localStorage.setItem(STORAGE_KEY, JSON.stringify(updated));
+      return updated;
+    });
+
+    try {
+      const headers: Record<string, string> = { 'Content-Type': 'application/json' };
+      headers['Authorization'] = `Bearer ${token}`;
+
+      const res = await fetch('/api/wipeout', {
+        method: 'POST',
+        headers,
+      });
+
+      if (!res.ok) {
+        const errorData = await res.json().catch(() => ({}));
+        throw new Error(errorData.error || 'WIPEOUT_FAILED');
+      }
+      
+      const data = await res.json();
+      setState(prev => ({ 
+        ...prev, 
+        manifest: data.manifest || INITIAL_MANIFEST,
+        isSyncing: false 
+      }));
+    } catch (err: any) {
+      console.error('WIPEOUT_ERROR:', err);
+      // Let it refresh to recover if failed
+      fetchInitialData();
+      throw err;
+    }
+  }, [session?.accessToken, fetchInitialData]);
+
   const value = useMemo(() => ({
     data: {
       manifest: state.manifest,
@@ -228,8 +275,9 @@ export function TerminalDataProvider({ children }: { children: React.ReactNode }
     isLoading: state.isSyncing,
     ...state,
     logTransaction,
-    refreshData: fetchInitialData
-  }), [state, logTransaction, fetchInitialData]);
+    refreshData: fetchInitialData,
+    wipeoutData
+  }), [state, logTransaction, fetchInitialData, wipeoutData]);
 
   return (
     <TerminalDataContext.Provider value={value}>

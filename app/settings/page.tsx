@@ -14,12 +14,18 @@ import Image from 'next/image';
 import { useAppStore } from '@/store/useAppStore';
 import { useEffect, useState } from 'react';
 import { toast } from 'sonner';
+import { useTerminalData } from '@/hooks/useTerminalData';
 
 export default function SettingsPage() {
   const { geminiApiKey, setGeminiApiKey, baseCurrency, setBaseCurrency, syncSettingsToDrive, loadSettingsFromDrive } = useAppStore();
   const [localKey, setLocalKey] = useState(geminiApiKey || '');
   const [localCurrency, setLocalCurrency] = useState(baseCurrency || 'INR');
   const [isSaving, setIsSaving] = useState(false);
+
+  const { wipeoutData } = useTerminalData();
+  const [isWipeoutModalOpen, setIsWipeoutModalOpen] = useState(false);
+  const [wipeoutConfirmation, setWipeoutConfirmation] = useState('');
+  const [isWipingOut, setIsWipingOut] = useState(false);
 
   const [hasLoaded, setHasLoaded] = useState(false);
 
@@ -47,6 +53,21 @@ export default function SettingsPage() {
       toast.error('SYNC_FAILED_CHECK_AUTH');
     } finally {
       setIsSaving(false);
+    }
+  }
+
+  async function handleWipeout() {
+    if (wipeoutConfirmation !== 'WIPEOUT') return;
+    setIsWipingOut(true);
+    try {
+      await wipeoutData();
+      toast.success('SYSTEM_WIPED_SUCCESSFULLY');
+      setIsWipeoutModalOpen(false);
+      setWipeoutConfirmation('');
+    } catch (e) {
+      toast.error('WIPEOUT_FAILED');
+    } finally {
+      setIsWipingOut(false);
     }
   }
 
@@ -178,6 +199,23 @@ export default function SettingsPage() {
 
             <SystemHealth />
 
+            {/* Wipeout Section */}
+            <div className="border-2 border-[#FF0000] bg-[#121212] p-6 shadow-[4px_4px_0px_0px_rgba(255,0,0,1)]">
+               <div className="flex items-center gap-3 mb-4 border-b border-[#FF0000]/30 pb-4">
+                  <Activity className="size-4 text-[#FF0000]" />
+                  <h3 className="text-[10px] font-bold tracking-[0.2em] text-[#FF0000] uppercase">DATA_DESTRUCTION</h3>
+               </div>
+               <p className="text-[10px] font-medium text-white/60 mb-6">
+                 Warning: This action is irreversible. All historical transactions and manifest data will be permanently purged.
+               </p>
+               <Button 
+                 onClick={() => setIsWipeoutModalOpen(true)}
+                 className="w-full rounded-none border-2 border-[#FF0000] bg-black text-[#FF0000] hover:bg-[#FF0000] hover:text-black transition-colors text-[10px] font-black tracking-widest uppercase py-6"
+               >
+                 INITIATE_WIPEOUT
+               </Button>
+            </div>
+
             <div className="relative border-2 border-white/10 bg-black aspect-video overflow-hidden group">
                <Image 
                  src="/hardware_visualizer_rack_1778782900509.png" 
@@ -212,6 +250,51 @@ export default function SettingsPage() {
           </div>
         </footer>
       </div>
+
+      {isWipeoutModalOpen && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/80 backdrop-blur-sm p-4">
+          <div className="w-full max-w-md border-4 border-[#FF0000] bg-[#050505] p-8 shadow-[12px_12px_0px_0px_rgba(255,0,0,0.4)] relative">
+            <button 
+              onClick={() => {
+                setIsWipeoutModalOpen(false);
+                setWipeoutConfirmation('');
+              }}
+              className="absolute top-4 right-4 text-white/50 hover:text-white font-bold text-[10px] tracking-widest"
+            >
+              [ ABORT ]
+            </button>
+            
+            <h2 className="text-2xl font-black text-[#FF0000] tracking-tighter mb-4 animate-pulse uppercase">
+              WARNING: TOTAL DATA DESTRUCTION
+            </h2>
+            
+            <p className="text-sm font-medium text-white/70 font-mono mb-8">
+              You are about to purge all ledger entries and zero-out the system manifest. 
+              Type <strong className="text-white bg-[#FF0000] px-1">WIPEOUT</strong> below to confirm your intent.
+            </p>
+            
+            <input
+              type="text"
+              value={wipeoutConfirmation}
+              onChange={(e) => setWipeoutConfirmation(e.target.value)}
+              placeholder="TYPE WIPEOUT"
+              className="w-full bg-black border-2 border-[#FF0000]/50 p-4 text-center text-xl font-black tracking-widest text-[#FF0000] outline-none focus:border-[#FF0000] uppercase mb-8"
+            />
+            
+            <Button
+              onClick={handleWipeout}
+              disabled={wipeoutConfirmation !== 'WIPEOUT' || isWipingOut}
+              className={`w-full rounded-none border-2 py-6 text-sm font-black tracking-[0.2em] uppercase transition-all ${
+                wipeoutConfirmation === 'WIPEOUT' && !isWipingOut
+                  ? 'border-[#FF0000] bg-[#FF0000] text-black shadow-[4px_4px_0px_0px_rgba(255,255,255,0.2)] hover:translate-x-[2px] hover:translate-y-[2px] hover:shadow-none'
+                  : 'border-white/20 bg-white/5 text-white/30 cursor-not-allowed'
+              }`}
+            >
+              {isWipingOut ? 'PURGING_SYSTEM...' : 'CONFIRM_DESTRUCTION'}
+            </Button>
+          </div>
+        </div>
+      )}
     </DashboardChrome>
   );
 }

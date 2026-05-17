@@ -14,6 +14,6 @@ export function useTerminalData() {
     error: context.error,
     refresh: context.refreshData,
     logTransaction: context.logTransaction,
-    // Add any missing helpers
+    wipeoutData: context.wipeoutData,
   };
 }
