@@ -142,7 +142,7 @@ export function LedgerHistoryModal({ isOpen, onClose, transactions, baseCurrency
                 <Button
                   variant="outline"
                   className={cn(
-                    "bg-black border border-white/20 text-white p-2 text-xs w-full focus:border-[#BBFF00] outline-none justify-start text-left font-normal h-auto hover:bg-white/5 hover:text-white rounded-none",
+                    "bg-black border border-white/20 text-white p-2 text-xs flex-1 shrink min-w-0 focus:border-[#BBFF00] outline-none justify-start text-left font-normal h-auto hover:bg-white/5 hover:text-white rounded-none",
                     !minAmount && "text-white/50"
                   )}
                 >
@@ -159,7 +159,7 @@ export function LedgerHistoryModal({ isOpen, onClose, transactions, baseCurrency
                 <Button
                   variant="outline"
                   className={cn(
-                    "bg-black border border-white/20 text-white p-2 text-xs w-full focus:border-[#BBFF00] outline-none justify-start text-left font-normal h-auto hover:bg-white/5 hover:text-white rounded-none",
+                    "bg-black border border-white/20 text-white p-2 text-xs flex-1 shrink min-w-0 focus:border-[#BBFF00] outline-none justify-start text-left font-normal h-auto hover:bg-white/5 hover:text-white rounded-none",
                     !maxAmount && "text-white/50"
                   )}
                 >
