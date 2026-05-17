@@ -13,6 +13,7 @@ import {
   PopoverContent,
   PopoverTrigger,
 } from "@/components/ui/popover";
+import { useAppStore } from '@/store/useAppStore';
 
 interface Transaction {
   id: string;
@@ -40,6 +41,7 @@ export function LedgerHistoryModal({ isOpen, onClose, transactions, baseCurrency
   const [minAmount, setMinAmount] = useState('');
   const [maxAmount, setMaxAmount] = useState('');
   const [date, setDate] = useState<DateRange | undefined>();
+  const { categoryColors } = useAppStore();
 
   const filteredTransactions = useMemo(() => {
     return transactions.filter(t => {
@@ -213,7 +215,8 @@ export function LedgerHistoryModal({ isOpen, onClose, transactions, baseCurrency
                 </div>
               </div>
               <div
-                className="mt-3 inline-block border border-white/20 px-3 py-1 text-[clamp(9px,2.5vw,10px)] font-bold tracking-widest text-white bg-white/5 uppercase"
+                className="mt-3 inline-block border-2 border-white px-3 py-1 text-[clamp(9px,2.5vw,10px)] font-bold tracking-widest text-black uppercase"
+                style={{ backgroundColor: categoryColors?.[item.class] || '#888888' }}
               >
                 {item.class}
               </div>

@@ -4,13 +4,14 @@ import React, { useState } from 'react';
 import { useTerminalData } from '../hooks/useTerminalData';
 import { useAppStore } from '@/store/useAppStore';
 import { formatCurrency } from '@/lib/currencyUtils';
+import { cn } from '@/lib/utils';
 import { Filter } from 'lucide-react';
 import { LedgerHistoryModal } from './ledger-history-modal';
 import { TransactionDetailsModal } from './transaction-details-modal';
 
 export function RecentLogs() {
   const { data, isLoading } = useTerminalData();
-  const { baseCurrency } = useAppStore();
+  const { baseCurrency, categoryColors } = useAppStore();
   const expenses = data?.history || [];
 
   const [isHistoryModalOpen, setIsHistoryModalOpen] = useState(false);
@@ -47,11 +48,11 @@ export function RecentLogs() {
             >
               <div className="flex flex-wrap items-start justify-between gap-3">
                 <div className="min-w-0">
-                  <div className="text-[clamp(1rem,4vw,1.125rem)] font-black tracking-tight uppercase">
+                  <div className={cn("text-[clamp(1rem,4vw,1.125rem)] font-black tracking-tight uppercase", item.status === 'PENDING_SYNC' && "animate-pulse text-[#BBFF00]")}>
                     {item.merchant}
                   </div>
                   <div className="text-[clamp(9px,2.5vw,10px)] font-bold tracking-widest text-white/60">
-                    {new Date(item.timestamp).toLocaleString()}
+                    {item.status === 'PENDING_SYNC' ? 'ESTABLISHING_LINK...' : new Date(item.timestamp).toLocaleString()}
                   </div>
                 </div>
                 <div className="shrink-0 text-[clamp(1rem,4vw,1.125rem)] font-black">
@@ -59,7 +60,8 @@ export function RecentLogs() {
                 </div>
               </div>
               <div
-                className="mt-3 inline-block border-2 border-white px-3 py-1 text-[clamp(9px,2.5vw,10px)] font-bold tracking-widest text-black bg-[#BBFF00]"
+                className="mt-3 inline-block border-2 border-white px-3 py-1 text-[clamp(9px,2.5vw,10px)] font-bold tracking-widest text-black"
+                style={{ backgroundColor: categoryColors?.[item.class] || '#888888' }}
               >
                 {item.class}
               </div>

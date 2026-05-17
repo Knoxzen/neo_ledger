@@ -32,14 +32,7 @@ interface DashboardBox {
   icon: LucideIcon;
 }
 
-const CATEGORY_COLORS: Record<string, string> = {
-  DINING: '#BBFF00',
-  FASHION: '#FF00FF',
-  TECH: '#00FFFF',
-  TRAVEL: '#FFFFFF',
-  ENTERTAINMENT: '#7000FF',
-  MISC: '#888888',
-};
+
 
 function getBoxIcon(id: DashboardBoxId) {
   switch (id) {
@@ -302,13 +295,13 @@ function Visualization({ box }: { box: DashboardBox }) {
   );
 }
 
-function AllocationChart({ totals }: { totals: Record<string, number> }) {
+function AllocationChart({ totals, categoryColors }: { totals: Record<string, number>, categoryColors: Record<string, string> }) {
   const chartData = Object.entries(totals)
     .filter(([_, value]) => value > 0)
     .map(([name, value]) => ({
       name,
       value,
-      color: CATEGORY_COLORS[name] || '#888888'
+      color: categoryColors[name] || '#888888'
     }));
 
   if (chartData.length === 0) {
@@ -356,7 +349,7 @@ function AllocationChart({ totals }: { totals: Record<string, number> }) {
   );
 }
 
-function DetailedAnalysis({ box, totals, baseCurrency, onClose }: { box: DashboardBox; totals: Record<string, number>; baseCurrency: string; onClose: () => void }) {
+function DetailedAnalysis({ box, totals, baseCurrency, categoryColors, onClose }: { box: DashboardBox; totals: Record<string, number>; baseCurrency: string; categoryColors: Record<string, string>; onClose: () => void }) {
   const Icon = box.icon;
 
   return (
@@ -411,7 +404,7 @@ function DetailedAnalysis({ box, totals, baseCurrency, onClose }: { box: Dashboa
             VISUALIZATION
           </div>
           <div className="mt-4 border-2 border-white bg-[#050505] shadow-[4px_4px_0px_0px_rgba(0,0,0,1)]">
-            {box.id === 3 ? <AllocationChart totals={totals} /> : <Visualization box={box} />}
+            {box.id === 3 ? <AllocationChart totals={totals} categoryColors={categoryColors} /> : <Visualization box={box} />}
           </div>
         </motion.div>
 
@@ -437,7 +430,7 @@ function DetailedAnalysis({ box, totals, baseCurrency, onClose }: { box: Dashboa
                     className="flex items-center justify-between border-2 border-white/30 p-3"
                   >
                     <div className="flex items-center gap-3">
-                      <div className="size-3" style={{ backgroundColor: CATEGORY_COLORS[name] || '#888888' }} />
+                      <div className="size-3" style={{ backgroundColor: categoryColors[name] || '#888888' }} />
                       <span className="font-bold tracking-widest">{name}</span>
                     </div>
                     <span className="font-mono text-[#BBFF00]">{formatCurrency(value, baseCurrency)}</span>
@@ -466,7 +459,7 @@ function DetailedAnalysis({ box, totals, baseCurrency, onClose }: { box: Dashboa
 export function DashboardWidgets() {
   const [activeBox, setActiveBox] = useState<DashboardBoxId | null>(null);
   const { data, isLoading } = useTerminalData();
-  const { baseCurrency } = useAppStore();
+  const { baseCurrency, categoryColors } = useAppStore();
   const currencySymbol = getCurrencySymbol(baseCurrency || 'INR');
 
   const { topCategory, topCategoryTotal, topCategoryPercent, categoryTotals } = useMemo(() => {
@@ -660,7 +653,7 @@ export function DashboardWidgets() {
                 'lg:min-h-[560px]'
               )}
             >
-              <DetailedAnalysis box={active} totals={categoryTotals} baseCurrency={baseCurrency} onClose={() => setActiveBox(null)} />
+              <DetailedAnalysis box={active} totals={categoryTotals} baseCurrency={baseCurrency} categoryColors={categoryColors} onClose={() => setActiveBox(null)} />
             </motion.div>
           ) : null}
         </AnimatePresence>

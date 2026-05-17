@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect } from 'react';
+import { useEffect, useState } from 'react';
 import { Zap } from 'lucide-react';
 
 import { DashboardChrome } from '@/components/dashboard-chrome';
@@ -26,6 +26,7 @@ export default function DashboardPage() {
   const { isLoggedIn, status } = useAuth();
   const { loadSettingsFromDrive } = useAppStore();
   const router = useRouter();
+  const [isCommandCenterOpen, setIsCommandCenterOpen] = useState(false);
 
   useEffect(() => {
     console.log(`DASHBOARD_PAGE: STATUS=${status} IS_LOGGED_IN=${isLoggedIn}`);
@@ -62,7 +63,7 @@ export default function DashboardPage() {
         </aside>
       </main>
 
-      <Drawer>
+      <Drawer open={isCommandCenterOpen} onOpenChange={setIsCommandCenterOpen}>
         <DrawerTrigger asChild>
           <Button
             type="button"
@@ -85,7 +86,7 @@ export default function DashboardPage() {
 
           <div className="px-[clamp(1rem,4vw,2rem)] pb-[max(1.5rem,env(safe-area-inset-bottom))]">
             <div className="rounded-none border-2 border-white bg-[#121212] p-[clamp(1rem,3vw,1.5rem)] shadow-[4px_4px_0px_0px_rgba(255,255,255,1)]">
-              <CommandCenter />
+              <CommandCenter onTrackSuccess={() => setIsCommandCenterOpen(false)} />
             </div>
             <div className="mt-4 text-center text-[clamp(9px,2.5vw,10px)] font-bold tracking-widest text-white/40">
               ESC TO CANCEL_PROCESS

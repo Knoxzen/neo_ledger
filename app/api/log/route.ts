@@ -34,7 +34,7 @@ CORE EXTRACTION RULES:
    - "merchant": Must be a single uppercase string following the rules above.
    - "amount": Must be parsed cleanly into a raw float/number (remove currency symbols and commas).
    - "currency": Standard 3-letter ISO code (default to "${baseCurrency}" if completely unmentioned, or deduce from context like "yen" -> "JPY").
-   - "class": Restrict strictly to one of these system enums: "DINING" | "FASHION" | "TECH" | "TRAVEL" | "ENTERTAINMENT" | "MISC".
+   - "class": Restrict strictly to one of these system enums: "DINING" | "FASHION" | "TECH" | "TRAVEL" | "ENTERTAINMENT" | "MISC" | "GROCERIES" | "TRANSPORT" | "UTILITIES" | "HEALTH" | "HOUSING".
    - "status": Always hardcode to "SUCCESS_00".
 
 3. OUTPUT FORMAT:

@@ -26,7 +26,7 @@ import { db } from '../services/db.service';
 import { useTerminalData } from '../hooks/useTerminalData';
 import { useAppStore } from '@/store/useAppStore';
 
-export function CommandCenter() {
+export function CommandCenter({ onTrackSuccess }: { onTrackSuccess?: () => void }) {
   const textareaRef = useRef<HTMLTextAreaElement | null>(null);
   const { logTransaction } = useTerminalData();
   const { geminiApiKey } = useAppStore();
@@ -52,6 +52,8 @@ export function CommandCenter() {
     
     const currentInput = input;
     setInput(''); // Clear input immediately for next entry
+    
+    onTrackSuccess?.(); // Close the drawer immediately on track
 
     try {
       // The context handles optimistic update and background sync

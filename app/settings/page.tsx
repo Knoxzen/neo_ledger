@@ -17,7 +17,7 @@ import { toast } from 'sonner';
 import { useTerminalData } from '@/hooks/useTerminalData';
 
 export default function SettingsPage() {
-  const { geminiApiKey, setGeminiApiKey, baseCurrency, setBaseCurrency, syncSettingsToDrive, loadSettingsFromDrive } = useAppStore();
+  const { geminiApiKey, setGeminiApiKey, baseCurrency, setBaseCurrency, categoryColors, setCategoryColor, syncSettingsToDrive, loadSettingsFromDrive } = useAppStore();
   const [localKey, setLocalKey] = useState(geminiApiKey || '');
   const [localCurrency, setLocalCurrency] = useState(baseCurrency || 'INR');
   const [isSaving, setIsSaving] = useState(false);
@@ -161,6 +161,35 @@ export default function SettingsPage() {
                    >
                      {cur}
                    </button>
+                 ))}
+               </div>
+            </div>
+
+            {/* Category Colors Section */}
+            <div className="border-2 border-white/40 bg-[#050505] p-8 shadow-[8px_8px_0px_0px_rgba(255,255,255,0.1)]">
+               <div className="flex items-center gap-3 mb-6">
+                  <Monitor className="size-6 text-white" />
+                  <h2 className="text-2xl font-black tracking-tight text-white uppercase">LABEL_COLORS</h2>
+               </div>
+               <p className="text-[10px] font-medium text-white/60 mb-6 font-mono">
+                 Customize the thematic color for each category tag across the dashboard and ledger.
+               </p>
+               <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                 {Object.entries(categoryColors || {}).map(([cat, color]) => (
+                   <div key={cat} className="flex items-center justify-between border-2 border-white/20 p-3 bg-[#121212]">
+                     <span className="text-[10px] font-bold tracking-widest text-white uppercase">{cat}</span>
+                     <div className="flex items-center gap-3">
+                       <span className="text-[10px] font-mono text-white/50">{color}</span>
+                       <div className="relative size-6 border-2 border-white overflow-hidden" style={{ backgroundColor: color }}>
+                         <input 
+                           type="color" 
+                           value={color}
+                           onChange={(e) => setCategoryColor(cat, e.target.value)}
+                           className="absolute inset-[-10px] size-12 cursor-pointer opacity-0"
+                         />
+                       </div>
+                     </div>
+                   </div>
                  ))}
                </div>
             </div>

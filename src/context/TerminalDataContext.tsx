@@ -12,7 +12,7 @@ const TransactionSchema = z.object({
   merchant: z.string(),
   amount: z.number(),
   currency: z.string(),
-  class: z.enum(['DINING', 'FASHION', 'TECH', 'TRAVEL', 'ENTERTAINMENT', 'MISC']),
+  class: z.string(),
   status: z.string(),
   meta: z.object({
     raw_input: z.string()
