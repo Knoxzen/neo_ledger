@@ -9,10 +9,12 @@ interface AppStore {
   syncStatus: 'idle' | 'syncing' | 'success' | 'error';
   lastBackupAt: number | null;
   geminiApiKey: string | null;
+  baseCurrency: string;
   setAuth: (auth: AuthState) => void;
   setSyncStatus: (status: 'idle' | 'syncing' | 'success' | 'error') => void;
   setLastBackupAt: (time: number) => void;
   setGeminiApiKey: (key: string | null) => void;
+  setBaseCurrency: (currency: string) => void;
   syncSettingsToDrive: () => Promise<void>;
   loadSettingsFromDrive: () => Promise<void>;
   logout: () => void;
@@ -24,6 +26,7 @@ export const useAppStore = create<AppStore>((set, get) => ({
   syncStatus: 'idle',
   lastBackupAt: null,
   geminiApiKey: null,
+  baseCurrency: 'INR',
   setAuth: (auth) => {
     set({ isLoggedIn: auth.isLoggedIn, user: auth.user });
     if (auth.isLoggedIn && auth.accessToken) {
@@ -40,8 +43,9 @@ export const useAppStore = create<AppStore>((set, get) => ({
   setSyncStatus: (status) => set({ syncStatus: status }),
   setLastBackupAt: (time) => set({ lastBackupAt: time }),
   setGeminiApiKey: (key) => set({ geminiApiKey: key }),
+  setBaseCurrency: (currency) => set({ baseCurrency: currency }),
   syncSettingsToDrive: async () => {
-    const { geminiApiKey } = get();
+    const { geminiApiKey, baseCurrency } = get();
     const auth = localStorage.getItem('NEO_AUTH');
     const token = auth ? JSON.parse(auth).accessToken : null;
     const headers: Record<string, string> = { 'Content-Type': 'application/json' };
@@ -50,7 +54,7 @@ export const useAppStore = create<AppStore>((set, get) => ({
     const res = await fetch('/api/settings', {
       method: 'POST',
       headers,
-      body: JSON.stringify({ geminiApiKey }),
+      body: JSON.stringify({ geminiApiKey, baseCurrency }),
     });
     if (!res.ok) throw new Error('SETTINGS_SYNC_FAILED');
   },
@@ -67,6 +71,9 @@ export const useAppStore = create<AppStore>((set, get) => ({
       if (config?.geminiApiKey) {
         set({ geminiApiKey: config.geminiApiKey });
       }
+      if (config?.baseCurrency) {
+        set({ baseCurrency: config.baseCurrency });
+      }
     } catch (e) {
       console.error('SETTINGS_LOAD_FAILED');
     }
@@ -74,6 +81,6 @@ export const useAppStore = create<AppStore>((set, get) => ({
   logout: () => {
     localStorage.removeItem('NEO_AUTH');
     document.cookie = "nextauth.session-token=; path=/; expires=Thu, 01 Jan 1970 00:00:00 GMT";
-    set({ isLoggedIn: false, user: null, geminiApiKey: null });
+    set({ isLoggedIn: false, user: null, geminiApiKey: null, baseCurrency: 'INR' });
   },
 }));

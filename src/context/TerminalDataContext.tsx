@@ -3,6 +3,7 @@
 import React, { createContext, useContext, useEffect, useState, useCallback, useMemo } from 'react';
 import { useSession } from 'next-auth/react';
 import { z } from 'zod';
+import { useAppStore } from '@/store/useAppStore';
 
 // --- SCHEMAS ---
 const TransactionSchema = z.object({
@@ -56,6 +57,7 @@ const INITIAL_MANIFEST: Manifest = {
 
 export function TerminalDataProvider({ children }: { children: React.ReactNode }) {
   const { data: session, status } = useSession();
+  const { baseCurrency } = useAppStore();
   const [state, setState] = useState<TerminalState>({
     manifest: INITIAL_MANIFEST,
     ledgerHistory: [],
@@ -133,7 +135,7 @@ export function TerminalDataProvider({ children }: { children: React.ReactNode }
         timestamp: new Date().toISOString(),
         merchant: "PROCESSING...",
         amount: estimatedAmount,
-        currency: "USD",
+        currency: baseCurrency || "INR",
         class: "MISC",
         status: "PENDING_SYNC"
       };
@@ -156,6 +158,7 @@ export function TerminalDataProvider({ children }: { children: React.ReactNode }
       const headers: Record<string, string> = { 'Content-Type': 'application/json' };
       if (token) headers['Authorization'] = `Bearer ${token}`;
       if (apiKey) headers['x-gemini-api-key'] = apiKey;
+      headers['x-base-currency'] = baseCurrency || 'INR';
 
       // FETCH PARSED DATA (GEMINI)
       const parseRes = await fetch('/api/log', {

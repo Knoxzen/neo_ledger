@@ -2,9 +2,13 @@
 
 import React from 'react';
 import { useTerminalData } from '../hooks/useTerminalData';
+import { useAppStore } from '@/store/useAppStore';
+import { getCurrencySymbol } from '@/lib/currencyUtils';
 
 export function RecentLogs() {
   const { data, isLoading } = useTerminalData();
+  const { baseCurrency } = useAppStore();
+  const currencySymbol = getCurrencySymbol(baseCurrency || 'INR');
   const expenses = data?.history || [];
 
   return (
@@ -39,7 +43,7 @@ export function RecentLogs() {
                   </div>
                 </div>
                 <div className="shrink-0 text-[clamp(1rem,4vw,1.125rem)] font-black">
-                  -${item.amount?.toLocaleString()}
+                  -{currencySymbol}{item.amount?.toLocaleString()}
                 </div>
               </div>
               <div

@@ -3,9 +3,13 @@
 import { Card, CardContent } from '@/components/ui/card';
 import { Progress } from '@/components/ui/progress';
 import { useTerminalData } from '../hooks/useTerminalData';
+import { useAppStore } from '@/store/useAppStore';
+import { getCurrencySymbol } from '@/lib/currencyUtils';
 
 export function MonthlyOutflowCard() {
   const { data, isLoading } = useTerminalData();
+  const { baseCurrency } = useAppStore();
+  const currencySymbol = getCurrencySymbol(baseCurrency || 'INR');
   const totalValue = data?.manifest?.total_burn || 0;
   const budgetUsedPercent = data?.manifest?.burn_rate ? (totalValue / 5000) * 100 : 0; // Assuming 5000 as a soft limit for now
   const safePercent = Math.min(100, Math.max(0, budgetUsedPercent));
@@ -24,7 +28,7 @@ export function MonthlyOutflowCard() {
         </div>
 
         <div className="mt-2 wrap-break-word font-black leading-none tracking-tight text-white sm:mt-3 text-[clamp(2rem,12vw+0.5rem,5.25rem)]">
-          ${totalValue.toLocaleString()}
+          {currencySymbol}{totalValue.toLocaleString()}
         </div>
 
         <div className="mt-4 sm:mt-6">

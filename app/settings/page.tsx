@@ -1,7 +1,7 @@
 'use client';
 
 import React from 'react';
-import { Search, Bell, Monitor, User, Key, BrainCircuit, Activity, Cpu } from 'lucide-react';
+import { Search, Bell, Monitor, User, Key, BrainCircuit, Activity, Cpu, Coins } from 'lucide-react';
 import { DashboardChrome } from '@/components/dashboard-chrome';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
@@ -16,20 +16,31 @@ import { useEffect, useState } from 'react';
 import { toast } from 'sonner';
 
 export default function SettingsPage() {
-  const { geminiApiKey, setGeminiApiKey, syncSettingsToDrive, loadSettingsFromDrive } = useAppStore();
+  const { geminiApiKey, setGeminiApiKey, baseCurrency, setBaseCurrency, syncSettingsToDrive, loadSettingsFromDrive } = useAppStore();
   const [localKey, setLocalKey] = useState(geminiApiKey || '');
+  const [localCurrency, setLocalCurrency] = useState(baseCurrency || 'INR');
   const [isSaving, setIsSaving] = useState(false);
+
+  const [hasLoaded, setHasLoaded] = useState(false);
 
   useEffect(() => {
     loadSettingsFromDrive().then(() => {
-      setLocalKey(useAppStore.getState().geminiApiKey || '');
+      setHasLoaded(true);
     });
   }, [loadSettingsFromDrive]);
+
+  useEffect(() => {
+    if (hasLoaded) {
+      setLocalKey(geminiApiKey || '');
+      setLocalCurrency(baseCurrency || 'INR');
+    }
+  }, [hasLoaded, geminiApiKey, baseCurrency]);
 
   async function handleSave() {
     setIsSaving(true);
     try {
       setGeminiApiKey(localKey);
+      setBaseCurrency(localCurrency);
       await syncSettingsToDrive();
       toast.success('SETTINGS_COMMITTED_TO_CLOUD');
     } catch (e) {
@@ -108,6 +119,29 @@ export default function SettingsPage() {
                  onChange={() => {}}
                  placeholder="SK-.........................................."
                />
+            </div>
+
+            {/* Base Currency Section */}
+            <div className="border-2 border-[#00FFFF] bg-[#050505] p-8 shadow-[8px_8px_0px_0px_rgba(0,255,255,0.2)]">
+               <div className="flex items-center gap-3 mb-6">
+                  <Coins className="size-6 text-[#00FFFF]" />
+                  <h2 className="text-2xl font-black tracking-tight text-white uppercase">BASE_CURRENCY</h2>
+               </div>
+               <div className="flex gap-4 flex-wrap">
+                 {['INR', 'USD', 'EUR', 'GBP', 'JPY'].map(cur => (
+                   <button
+                     key={cur}
+                     onClick={() => setLocalCurrency(cur)}
+                     className={`px-6 py-2 border-2 font-bold tracking-widest transition-colors ${
+                       localCurrency === cur
+                         ? 'border-[#00FFFF] bg-[#00FFFF] text-black shadow-[4px_4px_0px_0px_rgba(255,255,255,1)]'
+                         : 'border-white/20 text-white hover:border-[#00FFFF]'
+                     }`}
+                   >
+                     {cur}
+                   </button>
+                 ))}
+               </div>
             </div>
 
             {/* AI Threshold Section */}

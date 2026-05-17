@@ -11,7 +11,7 @@ import crypto from "crypto";
 
 const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY || "");
 
-async function parseTransaction(input: string, apiKey?: string) {
+async function parseTransaction(input: string, apiKey?: string, baseCurrency: string = 'INR') {
   const finalApiKey = apiKey || process.env.GEMINI_API_KEY;
   if (!finalApiKey) {
     throw new Error(
@@ -33,7 +33,7 @@ CORE EXTRACTION RULES:
 2. FIELD CONSTRAINTS:
    - "merchant": Must be a single uppercase string following the rules above.
    - "amount": Must be parsed cleanly into a raw float/number (remove currency symbols and commas).
-   - "currency": Standard 3-letter ISO code (default to "INR" if completely unmentioned, or deduce from context like "yen" -> "JPY").
+   - "currency": Standard 3-letter ISO code (default to "${baseCurrency}" if completely unmentioned, or deduce from context like "yen" -> "JPY").
    - "class": Restrict strictly to one of these system enums: "DINING" | "FASHION" | "TECH" | "TRAVEL" | "ENTERTAINMENT" | "MISC".
    - "status": Always hardcode to "SUCCESS_00".
 
@@ -162,6 +162,7 @@ export async function POST(req: NextRequest) {
   try {
     const { message, action } = await req.json();
     const clientApiKey = req.headers.get("x-gemini-api-key");
+    const baseCurrency = req.headers.get("x-base-currency") || "INR";
     const authHeader = req.headers.get("Authorization");
     const token = authHeader?.startsWith("Bearer ")
       ? authHeader.substring(7)
@@ -172,6 +173,7 @@ export async function POST(req: NextRequest) {
         const parsed = await parseTransaction(
           message,
           clientApiKey || undefined,
+          baseCurrency
         );
         const entry = {
           id: `TX_${crypto.randomUUID().split("-")[0].toUpperCase()}`,
