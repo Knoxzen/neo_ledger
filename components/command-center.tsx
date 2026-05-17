@@ -21,29 +21,14 @@ interface ParsedTransaction {
   raw?: unknown;
 }
 
-function normalizeParsedTransaction(payload: unknown): ParsedTransaction {
-  if (payload && typeof payload === 'object') {
-    const record = payload as Record<string, unknown>;
-    return {
-      amount: (record.amount as number | string | undefined) ?? (record.total as number | string | undefined),
-      currency: (record.currency as string | undefined) ?? (record.ccy as string | undefined),
-      category: (record.category as string | undefined) ?? (record.category_name as string | undefined),
-      vendor: (record.vendor as string | undefined) ?? (record.merchant as string | undefined),
-      date: (record.date as string | undefined) ?? (record.timestamp as string | undefined),
-      raw: payload,
-    };
-  }
-
-  return { raw: payload };
-}
 
 import { db } from '../services/db.service';
 import { useTerminalData } from '../hooks/useTerminalData';
 import { useAppStore } from '@/store/useAppStore';
 
-export function CommandCenter() {
+export function CommandCenter({ onTrackSuccess }: { onTrackSuccess?: () => void }) {
   const textareaRef = useRef<HTMLTextAreaElement | null>(null);
-  const { logTransaction, commitTransaction, refresh } = useTerminalData();
+  const { logTransaction } = useTerminalData();
   const { geminiApiKey } = useAppStore();
 
   const [status, setStatus] = useState<CommandCenterStatus>('idle');
@@ -58,36 +43,26 @@ export function CommandCenter() {
   const isBusy = status === 'processing';
   const canSubmit = useMemo(() => input.trim().length > 0 && !isBusy, [input, isBusy]);
 
-  async function handleLogToLedger() {
-    if (!parsed?.raw) return;
-    
-    try {
-      await commitTransaction(parsed.raw);
-      await refresh();
-      resetToIdle();
-      setInput('');
-    } catch (e: any) {
-      setError('COMMIT_FAILED_DRIVE_DISCONNECT');
-    }
-  }
 
   async function handleSubmit() {
     if (!canSubmit) return;
 
     setError(null);
     setStatus('processing');
-    setParsed(null);
+    
+    const currentInput = input;
+    setInput(''); // Clear input immediately for next entry
+    
+    onTrackSuccess?.(); // Close the drawer immediately on track
 
     try {
-      if (!geminiApiKey) {
-        throw new Error('GEMINI_API_KEY_MISSING. PLEASE CONFIGURE IN SETTINGS_PAGE.');
-      }
-      const result = await logTransaction(input, geminiApiKey);
-      setParsed(normalizeParsedTransaction(result));
-      setStatus('review');
-    } catch (e: any) {
-      setError(e.message || 'AI_SYNTAX_ERROR_OR_AUTH_FAIL');
+      // The context handles optimistic update and background sync
+      await logTransaction(currentInput, geminiApiKey || undefined);
       setStatus('idle');
+    } catch (e: any) {
+      setError(e.message || 'PROCESS_FAILED');
+      setStatus('idle');
+      setInput(currentInput); // Restore input on error
     }
   }
 
@@ -178,7 +153,7 @@ export function CommandCenter() {
 
           {status === 'processing' ? (
             <div className="pointer-events-none absolute bottom-0 left-0 h-1.5 w-full overflow-hidden">
-              <div className="h-full w-full bg-[#BBFF00] animate-[shimmer_2s_infinite_linear] bg-[length:200%_100%] bg-gradient-to-r from-transparent via-white/50 to-transparent" />
+              <div className="h-full w-full bg-[#BBFF00] animate-[shimmer_2s_infinite_linear] bg-size-[200%_100%] bg-linear-to-r from-transparent via-white/50 to-transparent" />
             </div>
           ) : null}
         </div>
@@ -195,59 +170,6 @@ export function CommandCenter() {
         ) : null}
       </div>
 
-      {status === 'review' && parsed ? (
-        <div className="mt-6 grid grid-cols-1 gap-3 sm:grid-cols-2 sm:gap-4">
-          <Card className="rounded-none border-2 border-white bg-[#121212] shadow-[4px_4px_0px_0px_rgba(0,0,0,1)]">
-            <CardContent className="p-3 sm:p-4">
-              <div className="text-[clamp(9px,2.5vw,10px)] font-bold tracking-widest text-white/40">
-                AMOUNT
-              </div>
-              <div className="mt-1 text-[clamp(1.375rem,6vw,1.875rem)] font-black tracking-tight text-[#BBFF00]">
-                {String(parsed.amount ?? '—')}{' '}
-                <span className="text-white/40 text-base sm:text-lg">
-                  {parsed.currency ?? ''}
-                </span>
-              </div>
-            </CardContent>
-          </Card>
-
-          <Card className="rounded-none border-2 border-white bg-[#121212] shadow-[4px_4px_0px_0px_rgba(0,0,0,1)]">
-            <CardContent className="p-3 sm:p-4">
-              <div className="text-[clamp(9px,2.5vw,10px)] font-bold tracking-widest text-white/40">
-                CATEGORY
-              </div>
-              <Badge
-                className="mt-2 rounded-none border-2 border-white bg-[#FF00FF] px-3 py-1 text-[clamp(9px,2.5vw,10px)] font-bold tracking-widest text-black shadow-[2px_2px_0px_0px_rgba(0,0,0,1)]"
-              >
-                {(parsed.category ?? 'UNCLASSIFIED').toString().toUpperCase()}
-              </Badge>
-            </CardContent>
-          </Card>
-
-          <Card className="rounded-none border-2 border-white bg-[#121212] shadow-[4px_4px_0px_0px_rgba(0,0,0,1)]">
-            <CardContent className="p-3 sm:p-4">
-              <div className="text-[clamp(9px,2.5vw,10px)] font-bold tracking-widest text-white/40">
-                VENDOR
-              </div>
-              <div className="mt-1 wrap-break-word text-[clamp(1.125rem,5vw,1.5rem)] font-black tracking-tight uppercase text-white/90">
-                {parsed.vendor ?? '—'}
-              </div>
-            </CardContent>
-          </Card>
-
-          <Card className="rounded-none border-2 border-white bg-[#121212] shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] sm:col-span-2">
-            <CardContent className="p-3 sm:p-4">
-              <Button
-                type="button"
-                onClick={handleLogToLedger}
-                className="w-full rounded-none border-2 border-black bg-[#BBFF00] px-4 py-3 text-sm font-black tracking-widest text-black shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] hover:translate-x-[2px] hover:translate-y-[2px] hover:shadow-none transition-all"
-              >
-                LOG TO LEDGER
-              </Button>
-            </CardContent>
-          </Card>
-        </div>
-      ) : null}
     </div>
   );
 }

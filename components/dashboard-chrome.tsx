@@ -3,7 +3,7 @@
 import { useCallback, useEffect, useState } from 'react';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
-import { Menu, X, History } from 'lucide-react';
+import { Menu, X, History, User } from 'lucide-react';
 
 import { Button } from '@/components/ui/button';
 import {
@@ -17,13 +17,20 @@ import { RecentLogs } from '@/components/recent-logs';
 import { ExecuteBar } from '@/components/terminal/execute-bar';
 import { cn } from '@/lib/utils';
 
+import { useSession } from 'next-auth/react';
 import { LogoutModal } from '@/components/LogoutModal';
 
 export function DashboardChrome({ children }: { children: React.ReactNode }) {
+  const { data: session } = useSession();
   const pathname = usePathname();
   const [navOpen, setNavOpen] = useState(false);
   const [historyOpen, setHistoryOpen] = useState(false);
   const [logoutModalOpen, setLogoutModalOpen] = useState(false);
+  const [mounted, setMounted] = useState(false);
+
+  useEffect(() => {
+    setMounted(true);
+  }, []);
 
   const closeNav = useCallback(() => setNavOpen(false), []);
 
@@ -49,12 +56,14 @@ export function DashboardChrome({ children }: { children: React.ReactNode }) {
   }, [navOpen, historyOpen, logoutModalOpen, closeNav]);
 
   const navItems = [
-    { label: 'DASHBOARD', href: '/' },
+    { label: 'DASHBOARD', href: '/dashboard' },
     { label: 'ANALYTICS', href: '/analytics' },
     { label: 'BUDGET', href: '/budget' },
     { label: 'WALLETS', href: '/wallets' },
     { label: 'SETTINGS', href: '/settings' },
   ];
+
+  const [imgError, setImgError] = useState(false);
 
   return (
     <div className="flex h-screen w-full overflow-hidden bg-[#050505] text-white">
@@ -193,9 +202,51 @@ export function DashboardChrome({ children }: { children: React.ReactNode }) {
               <span className="hidden text-[clamp(10px,2vw,12px)] font-bold tracking-widest md:inline">
                 NOTIFS
               </span>
-              <span className="text-[clamp(10px,2vw,12px)] font-bold tracking-widest">
-                USER
-              </span>
+
+              <div className="group relative flex items-center">
+                <div className="size-8 rounded-none border-2 border-white bg-[#121212] overflow-hidden shrink-0 shadow-[2px_2px_0px_0px_rgba(255,255,255,0.3)] transition-all group-hover:border-[#BBFF00] group-hover:shadow-[0_0_10px_rgba(187,255,0,0.5)] flex items-center justify-center">
+                  {mounted && session?.user?.image && !imgError ? (
+                    <img 
+                      src={session.user.image} 
+                      alt={session.user.name || 'User'} 
+                      className="size-full object-cover"
+                      onError={() => setImgError(true)}
+                    />
+                  ) : (
+                    <User className="size-5 text-white/50" />
+                  )}
+                </div>
+
+                {/* Profile Popup */}
+                <div className="absolute right-0 top-full mt-3 hidden w-64 translate-y-2 group-hover:block z-50">
+                   <div className="border-2 border-white bg-[#050505] p-4 shadow-[4px_4px_0px_0px_rgba(255,255,255,1)]">
+                      <div className="text-[10px] font-bold tracking-[0.2em] text-[#BBFF00] mb-2 uppercase">
+                        OPERATOR_PROFILE // ACTIVE
+                      </div>
+                      <div className="text-sm font-black uppercase tracking-tight text-white mb-1">
+                        {mounted && session?.user?.name ? session.user.name : 'UNKNOWN_OPERATOR'}
+                      </div>
+                      <div className="text-[9px] font-bold text-white/50 tracking-widest mb-3">
+                        {mounted && session?.user?.email ? session.user.email : '...'}
+                      </div>
+                      <div className="border-t border-white/10 pt-3">
+                        <div className="flex justify-between items-center text-[9px] font-bold tracking-widest uppercase">
+                          <span className="text-white/40">LOGIN_TIMESTAMP</span>
+                          <span className="text-white">
+                            {(session?.user as any)?.loginDate && mounted
+                              ? new Date((session?.user as any).loginDate).toLocaleString('en-US', {
+                                  month: 'short',
+                                  day: '2-digit',
+                                  hour: '2-digit',
+                                  minute: '2-digit'
+                                }).toUpperCase()
+                              : 'N/A'}
+                          </span>
+                        </div>
+                      </div>
+                   </div>
+                </div>
+              </div>
             </div>
           </div>
         </header>

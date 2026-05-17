@@ -3,6 +3,8 @@
 import React from 'react';
 import { cn } from '@/lib/utils';
 import { Badge } from '@/components/ui/badge';
+import { useAppStore } from '@/store/useAppStore';
+import { formatCurrency } from '@/lib/currencyUtils';
 
 interface BudgetTrackProps {
   category: string;
@@ -13,6 +15,7 @@ interface BudgetTrackProps {
 }
 
 export function BudgetTrack({ category, id, spent, total, color }: BudgetTrackProps) {
+  const { baseCurrency } = useAppStore();
   const percentage = Math.min((spent / total) * 100, 100);
   const isCritical = percentage > 90;
   const isStable = percentage < 60;
@@ -38,7 +41,7 @@ export function BudgetTrack({ category, id, spent, total, color }: BudgetTrackPr
           </span>
         </div>
         <div className="font-mono text-[11px] font-bold tracking-tighter text-white">
-          ${spent.toLocaleString()} <span className="text-white/20">/</span> ${total.toLocaleString()}
+          {formatCurrency(spent, baseCurrency)} <span className="text-white/20">/</span> {formatCurrency(total, baseCurrency)}
         </div>
       </div>
 

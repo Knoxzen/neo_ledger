@@ -1,7 +1,7 @@
 'use client';
 
 import React from 'react';
-import { Search, Bell, Monitor, User, Key, BrainCircuit, Activity, Cpu } from 'lucide-react';
+import { Search, Bell, Monitor, User, Key, BrainCircuit, Activity, Cpu, Coins } from 'lucide-react';
 import { DashboardChrome } from '@/components/dashboard-chrome';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
@@ -14,28 +14,60 @@ import Image from 'next/image';
 import { useAppStore } from '@/store/useAppStore';
 import { useEffect, useState } from 'react';
 import { toast } from 'sonner';
+import { useTerminalData } from '@/hooks/useTerminalData';
 
 export default function SettingsPage() {
-  const { geminiApiKey, setGeminiApiKey, syncSettingsToDrive, loadSettingsFromDrive } = useAppStore();
+  const { geminiApiKey, setGeminiApiKey, baseCurrency, setBaseCurrency, categoryColors, setCategoryColor, syncSettingsToDrive, loadSettingsFromDrive } = useAppStore();
   const [localKey, setLocalKey] = useState(geminiApiKey || '');
+  const [localCurrency, setLocalCurrency] = useState(baseCurrency || 'INR');
   const [isSaving, setIsSaving] = useState(false);
+
+  const { wipeoutData } = useTerminalData();
+  const [isWipeoutModalOpen, setIsWipeoutModalOpen] = useState(false);
+  const [wipeoutConfirmation, setWipeoutConfirmation] = useState('');
+  const [isWipingOut, setIsWipingOut] = useState(false);
+
+  const [hasLoaded, setHasLoaded] = useState(false);
 
   useEffect(() => {
     loadSettingsFromDrive().then(() => {
-      setLocalKey(useAppStore.getState().geminiApiKey || '');
+      setHasLoaded(true);
     });
   }, [loadSettingsFromDrive]);
+
+  useEffect(() => {
+    if (hasLoaded) {
+      setLocalKey(geminiApiKey || '');
+      setLocalCurrency(baseCurrency || 'INR');
+    }
+  }, [hasLoaded, geminiApiKey, baseCurrency]);
 
   async function handleSave() {
     setIsSaving(true);
     try {
       setGeminiApiKey(localKey);
+      setBaseCurrency(localCurrency);
       await syncSettingsToDrive();
       toast.success('SETTINGS_COMMITTED_TO_CLOUD');
     } catch (e) {
       toast.error('SYNC_FAILED_CHECK_AUTH');
     } finally {
       setIsSaving(false);
+    }
+  }
+
+  async function handleWipeout() {
+    if (wipeoutConfirmation !== 'WIPEOUT') return;
+    setIsWipingOut(true);
+    try {
+      await wipeoutData();
+      toast.success('SYSTEM_WIPED_SUCCESSFULLY');
+      setIsWipeoutModalOpen(false);
+      setWipeoutConfirmation('');
+    } catch (e) {
+      toast.error('WIPEOUT_FAILED');
+    } finally {
+      setIsWipingOut(false);
     }
   }
 
@@ -110,6 +142,58 @@ export default function SettingsPage() {
                />
             </div>
 
+            {/* Base Currency Section */}
+            <div className="border-2 border-[#00FFFF] bg-[#050505] p-8 shadow-[8px_8px_0px_0px_rgba(0,255,255,0.2)]">
+               <div className="flex items-center gap-3 mb-6">
+                  <Coins className="size-6 text-[#00FFFF]" />
+                  <h2 className="text-2xl font-black tracking-tight text-white uppercase">BASE_CURRENCY</h2>
+               </div>
+               <div className="flex gap-4 flex-wrap">
+                 {['INR', 'USD', 'EUR', 'GBP', 'JPY'].map(cur => (
+                   <button
+                     key={cur}
+                     onClick={() => setLocalCurrency(cur)}
+                     className={`px-6 py-2 border-2 font-bold tracking-widest transition-colors ${
+                       localCurrency === cur
+                         ? 'border-[#00FFFF] bg-[#00FFFF] text-black shadow-[4px_4px_0px_0px_rgba(255,255,255,1)]'
+                         : 'border-white/20 text-white hover:border-[#00FFFF]'
+                     }`}
+                   >
+                     {cur}
+                   </button>
+                 ))}
+               </div>
+            </div>
+
+            {/* Category Colors Section */}
+            <div className="border-2 border-white/40 bg-[#050505] p-8 shadow-[8px_8px_0px_0px_rgba(255,255,255,0.1)]">
+               <div className="flex items-center gap-3 mb-6">
+                  <Monitor className="size-6 text-white" />
+                  <h2 className="text-2xl font-black tracking-tight text-white uppercase">LABEL_COLORS</h2>
+               </div>
+               <p className="text-[10px] font-medium text-white/60 mb-6 font-mono">
+                 Customize the thematic color for each category tag across the dashboard and ledger.
+               </p>
+               <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                 {Object.entries(categoryColors || {}).map(([cat, color]) => (
+                   <div key={cat} className="flex items-center justify-between border-2 border-white/20 p-3 bg-[#121212]">
+                     <span className="text-[10px] font-bold tracking-widest text-white uppercase">{cat}</span>
+                     <div className="flex items-center gap-3">
+                       <span className="text-[10px] font-mono text-white/50">{color}</span>
+                       <div className="relative size-6 border-2 border-white overflow-hidden" style={{ backgroundColor: color }}>
+                         <input 
+                           type="color" 
+                           value={color}
+                           onChange={(e) => setCategoryColor(cat, e.target.value)}
+                           className="absolute inset-[-10px] size-12 cursor-pointer opacity-0"
+                         />
+                       </div>
+                     </div>
+                   </div>
+                 ))}
+               </div>
+            </div>
+
             {/* AI Threshold Section */}
             <div className="border-2 border-[#BBFF00] bg-[#050505] p-8 shadow-[8px_8px_0px_0px_rgba(187,255,0,0.2)]">
                <div className="flex items-center gap-3 mb-10">
@@ -144,6 +228,23 @@ export default function SettingsPage() {
 
             <SystemHealth />
 
+            {/* Wipeout Section */}
+            <div className="border-2 border-[#FF0000] bg-[#121212] p-6 shadow-[4px_4px_0px_0px_rgba(255,0,0,1)]">
+               <div className="flex items-center gap-3 mb-4 border-b border-[#FF0000]/30 pb-4">
+                  <Activity className="size-4 text-[#FF0000]" />
+                  <h3 className="text-[10px] font-bold tracking-[0.2em] text-[#FF0000] uppercase">DATA_DESTRUCTION</h3>
+               </div>
+               <p className="text-[10px] font-medium text-white/60 mb-6">
+                 Warning: This action is irreversible. All historical transactions and manifest data will be permanently purged.
+               </p>
+               <Button 
+                 onClick={() => setIsWipeoutModalOpen(true)}
+                 className="w-full rounded-none border-2 border-[#FF0000] bg-black text-[#FF0000] hover:bg-[#FF0000] hover:text-black transition-colors text-[10px] font-black tracking-widest uppercase py-6"
+               >
+                 INITIATE_WIPEOUT
+               </Button>
+            </div>
+
             <div className="relative border-2 border-white/10 bg-black aspect-video overflow-hidden group">
                <Image 
                  src="/hardware_visualizer_rack_1778782900509.png" 
@@ -169,7 +270,7 @@ export default function SettingsPage() {
         {/* Footer */}
         <footer className="mt-auto pt-12 border-t border-white/10">
           <div className="flex flex-col md:flex-row justify-between items-center gap-4 text-[9px] font-bold tracking-[0.1em] text-white/30 uppercase font-mono">
-            <div>© 2024 NEO_LEDGER_CORP   ENCRYPTION: AES-256-GCM   UPTIME: 99.998%</div>
+            <div>© 2026 NEO_LEDGER_CORP   ENCRYPTION: AES-256-GCM   UPTIME: 99.998%</div>
             <div className="flex gap-4">
                <div className="h-3 w-3 bg-[#BBFF00]" />
                <div className="h-3 w-3 bg-[#FF00FF]" />
@@ -178,6 +279,51 @@ export default function SettingsPage() {
           </div>
         </footer>
       </div>
+
+      {isWipeoutModalOpen && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/80 backdrop-blur-sm p-4">
+          <div className="w-full max-w-md border-4 border-[#FF0000] bg-[#050505] p-8 shadow-[12px_12px_0px_0px_rgba(255,0,0,0.4)] relative">
+            <button 
+              onClick={() => {
+                setIsWipeoutModalOpen(false);
+                setWipeoutConfirmation('');
+              }}
+              className="absolute top-4 right-4 text-white/50 hover:text-white font-bold text-[10px] tracking-widest"
+            >
+              [ ABORT ]
+            </button>
+            
+            <h2 className="text-2xl font-black text-[#FF0000] tracking-tighter mb-4 animate-pulse uppercase">
+              WARNING: TOTAL DATA DESTRUCTION
+            </h2>
+            
+            <p className="text-sm font-medium text-white/70 font-mono mb-8">
+              You are about to purge all ledger entries and zero-out the system manifest. 
+              Type <strong className="text-white bg-[#FF0000] px-1">WIPEOUT</strong> below to confirm your intent.
+            </p>
+            
+            <input
+              type="text"
+              value={wipeoutConfirmation}
+              onChange={(e) => setWipeoutConfirmation(e.target.value)}
+              placeholder="TYPE WIPEOUT"
+              className="w-full bg-black border-2 border-[#FF0000]/50 p-4 text-center text-xl font-black tracking-widest text-[#FF0000] outline-none focus:border-[#FF0000] uppercase mb-8"
+            />
+            
+            <Button
+              onClick={handleWipeout}
+              disabled={wipeoutConfirmation !== 'WIPEOUT' || isWipingOut}
+              className={`w-full rounded-none border-2 py-6 text-sm font-black tracking-[0.2em] uppercase transition-all ${
+                wipeoutConfirmation === 'WIPEOUT' && !isWipingOut
+                  ? 'border-[#FF0000] bg-[#FF0000] text-black shadow-[4px_4px_0px_0px_rgba(255,255,255,0.2)] hover:translate-x-[2px] hover:translate-y-[2px] hover:shadow-none'
+                  : 'border-white/20 bg-white/5 text-white/30 cursor-not-allowed'
+              }`}
+            >
+              {isWipingOut ? 'PURGING_SYSTEM...' : 'CONFIRM_DESTRUCTION'}
+            </Button>
+          </div>
+        </div>
+      )}
     </DashboardChrome>
   );
 }
