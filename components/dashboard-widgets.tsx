@@ -135,7 +135,20 @@ function LineChart({
 
   return (
     <svg viewBox={`0 0 ${width} ${height}`} className="h-full w-full">
-      <rect x="0" y="0" width={width} height={height} fill="#050505" />
+      <defs>
+        <filter id={`glow-${accent.replace('#', '')}`} x="-20%" y="-20%" width="140%" height="140%">
+          <feGaussianBlur stdDeviation="6" result="blur" />
+          <feMerge>
+            <feMergeNode in="blur" />
+            <feMergeNode in="SourceGraphic" />
+          </feMerge>
+        </filter>
+        <linearGradient id={`grad-${accent.replace('#', '')}`} x1="0" y1="0" x2="0" y2="1">
+          <stop offset="0%" stopColor={accent} stopOpacity={0.25} />
+          <stop offset="100%" stopColor={accent} stopOpacity={0} />
+        </linearGradient>
+      </defs>
+      <rect x="0" y="0" width={width} height={height} fill="#020202" />
       {Array.from({ length: 5 }).map((_, idx) => {
         const y = padding + (idx * (height - padding * 2)) / 4;
         return (
@@ -145,13 +158,13 @@ function LineChart({
             x2={width - padding}
             y1={y}
             y2={y}
-            stroke="rgba(255,255,255,0.10)"
+            stroke="rgba(255,255,255,0.06)"
             strokeWidth="2"
           />
         );
       })}
-      <path d={area} fill={accent} opacity="0.12" />
-      <path d={d} fill="none" stroke={accent} strokeWidth="6" />
+      <path d={area} fill={`url(#grad-${accent.replace('#', '')})`} />
+      <path d={d} fill="none" stroke={accent} strokeWidth="5" filter={`url(#glow-${accent.replace('#', '')})`} />
       {points.map((p, idx) => (
         <circle key={idx} cx={p.x} cy={p.y} r="5" fill={accent} />
       ))}
@@ -177,13 +190,19 @@ function BarChart({
 
   return (
     <svg viewBox={`0 0 ${width} ${height}`} className="h-full w-full">
-      <rect x="0" y="0" width={width} height={height} fill="#050505" />
+      <defs>
+        <linearGradient id={`bar-grad-${accent.replace('#', '')}`} x1="0" y1="0" x2="0" y2="1">
+          <stop offset="0%" stopColor={accent} stopOpacity={1} />
+          <stop offset="100%" stopColor={accent} stopOpacity={0.4} />
+        </linearGradient>
+      </defs>
+      <rect x="0" y="0" width={width} height={height} fill="#020202" />
       <line
         x1={padding}
         x2={width - padding}
         y1={height - padding}
         y2={height - padding}
-        stroke="rgba(255,255,255,0.35)"
+        stroke="rgba(255,255,255,0.2)"
         strokeWidth="3"
       />
       {values.map((v, i) => {
@@ -197,7 +216,8 @@ function BarChart({
             y={y}
             width={barW}
             height={h}
-            fill={accent}
+            fill={`url(#bar-grad-${accent.replace('#', '')})`}
+            rx="3"
           />
         );
       })}
@@ -215,12 +235,21 @@ function Sparkline({ values, accent }: { values: number[]; accent: string }) {
     .join(' ');
   return (
     <svg viewBox={`0 0 ${width} ${height}`} className="h-full w-full">
-      <rect x="0" y="0" width={width} height={height} fill="#050505" />
-      <path d={d} fill="none" stroke={accent} strokeWidth="6" />
+      <defs>
+        <filter id={`glow-${accent.replace('#', '')}`} x="-20%" y="-20%" width="140%" height="140%">
+          <feGaussianBlur stdDeviation="5" result="blur" />
+          <feMerge>
+            <feMergeNode in="blur" />
+            <feMergeNode in="SourceGraphic" />
+          </feMerge>
+        </filter>
+      </defs>
+      <rect x="0" y="0" width={width} height={height} fill="#020202" />
+      <path d={d} fill="none" stroke={accent} strokeWidth="5" filter={`url(#glow-${accent.replace('#', '')})`} />
       {points.map((p, idx) => (
         <circle key={idx} cx={p.x} cy={p.y} r="4" fill={accent} />
       ))}
-      <text x={padding} y={32} fill="white" fontSize="16" fontWeight="800">
+      <text x={padding} y={32} fill="white" fontSize="16" fontWeight="800" letterSpacing="0.05em">
         SIGNAL STRENGTH
       </text>
     </svg>
@@ -239,15 +268,28 @@ function AreaChart({ values, accent }: { values: number[]; accent: string }) {
 
   return (
     <svg viewBox={`0 0 ${width} ${height}`} className="h-full w-full">
-      <rect x="0" y="0" width={width} height={height} fill="#050505" />
-      <path d={area} fill={accent} opacity="0.16" />
-      <path d={d} fill="none" stroke={accent} strokeWidth="6" />
+      <defs>
+        <filter id={`glow-${accent.replace('#', '')}`} x="-20%" y="-20%" width="140%" height="140%">
+          <feGaussianBlur stdDeviation="5" result="blur" />
+          <feMerge>
+            <feMergeNode in="blur" />
+            <feMergeNode in="SourceGraphic" />
+          </feMerge>
+        </filter>
+        <linearGradient id={`grad-${accent.replace('#', '')}`} x1="0" y1="0" x2="0" y2="1">
+          <stop offset="0%" stopColor={accent} stopOpacity={0.25} />
+          <stop offset="100%" stopColor={accent} stopOpacity={0} />
+        </linearGradient>
+      </defs>
+      <rect x="0" y="0" width={width} height={height} fill="#020202" />
+      <path d={area} fill={`url(#grad-${accent.replace('#', '')})`} />
+      <path d={d} fill="none" stroke={accent} strokeWidth="5" filter={`url(#glow-${accent.replace('#', '')})`} />
       <line
         x1={padding}
         x2={width - padding}
         y1={height - padding}
         y2={height - padding}
-        stroke="rgba(255,255,255,0.25)"
+        stroke="rgba(255,255,255,0.15)"
         strokeWidth="3"
       />
     </svg>
@@ -398,12 +440,12 @@ function DetailedAnalysis({ box, totals, baseCurrency, categoryColors, onClose }
           initial={{ opacity: 0, x: -20 }}
           animate={{ opacity: 1, x: 0 }}
           transition={{ delay: 0.15 }}
-          className="border-2 border-white bg-[#121212] p-[clamp(1rem,3vw,1.5rem)] shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] lg:col-span-7"
+          className="bg-[#121212] p-[clamp(1.25rem,4vw,1.75rem)] shadow-[0_4px_24px_rgba(0,0,0,0.4)] lg:col-span-7"
         >
           <div className="text-[clamp(10px,2.8vw,12px)] font-bold tracking-widest text-white/60">
             VISUALIZATION
           </div>
-          <div className="mt-4 border-2 border-white bg-[#050505] shadow-[4px_4px_0px_0px_rgba(0,0,0,1)]">
+          <div className="mt-4 bg-[#020202] rounded-lg overflow-hidden p-1 shadow-inner">
             {box.id === 3 ? <AllocationChart totals={totals} categoryColors={categoryColors} /> : <Visualization box={box} />}
           </div>
         </motion.div>
@@ -412,12 +454,12 @@ function DetailedAnalysis({ box, totals, baseCurrency, categoryColors, onClose }
           initial={{ opacity: 0, x: 20 }}
           animate={{ opacity: 1, x: 0 }}
           transition={{ delay: 0.25 }}
-          className="border-2 border-white bg-[#121212] p-[clamp(1rem,3vw,1.5rem)] shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] lg:col-span-5"
+          className="bg-[#121212] p-[clamp(1.25rem,4vw,1.75rem)] shadow-[0_4px_24px_rgba(0,0,0,0.4)] lg:col-span-5"
         >
           <div className="text-[clamp(10px,2.8vw,12px)] font-bold tracking-widest text-white/60">
             {box.id === 3 ? 'SYSTEM_LEGEND' : 'RECENT SIGNALS'}
           </div>
-          <div className="mt-4 space-y-3 text-[clamp(11px,2.8vw,12px)] text-white/70">
+          <div className="mt-4 space-y-1 text-[clamp(11px,2.8vw,12px)] text-white/70">
             {box.id === 3 ? (
               Object.entries(totals)
                 .filter(([_, v]) => v > 0)
@@ -427,10 +469,10 @@ function DetailedAnalysis({ box, totals, baseCurrency, categoryColors, onClose }
                     initial={{ opacity: 0, y: 10 }}
                     animate={{ opacity: 1, y: 0 }}
                     transition={{ delay: 0.4 + idx * 0.05 }}
-                    className="flex items-center justify-between border-2 border-white/30 p-3"
+                    className="flex items-center justify-between border-b border-white/10 py-3 px-1"
                   >
                     <div className="flex items-center gap-3">
-                      <div className="size-3" style={{ backgroundColor: categoryColors[name] || '#888888' }} />
+                      <div className="size-3 rounded-full" style={{ backgroundColor: categoryColors[name] || '#888888' }} />
                       <span className="font-bold tracking-widest">{name}</span>
                     </div>
                     <span className="font-mono text-[#BBFF00]">{formatCurrency(value, baseCurrency)}</span>
@@ -438,13 +480,13 @@ function DetailedAnalysis({ box, totals, baseCurrency, categoryColors, onClose }
                 ))
             ) : (
               <>
-                <div className="border-2 border-white/30 p-3">
+                <div className="border-b border-white/10 py-3 px-1">
                   - spike detected near “FOOD”
                 </div>
-                <div className="border-2 border-white/30 p-3">
+                <div className="border-b border-white/10 py-3 px-1">
                   - vendor concentration trending up
                 </div>
-                <div className="border-2 border-white/30 p-3">
+                <div className="border-b border-white/10 py-3 px-1">
                   - variance increased week-over-week
                 </div>
               </>
@@ -539,18 +581,16 @@ export function DashboardWidgets() {
     [data, isLoading, topCategory, topCategoryTotal, topCategoryPercent]
   );
 
-  const active = activeBox ? boxes.find((b) => b.id === activeBox) ?? null : null;
-
-  return (
+  const active = activeBox ? boxes.find((b) => b.id === activeBox) ?? null : null;  return (
     <LayoutGroup>
       <motion.div
         className="w-full"
       >
-        <div className={cn(activeBox ? 'flex flex-wrap items-center gap-2 sm:gap-3' : '')}>
+        <div className={cn(activeBox ? 'flex items-stretch gap-2 sm:gap-3 bg-[#121212] p-2 border-2 border-white/20 shadow-[4px_4px_0px_0px_rgba(0,0,0,1)]' : '')}>
           <div
             className={cn(
               activeBox
-                ? 'flex min-w-0 flex-1 gap-2 overflow-x-auto pb-2 [-ms-overflow-style:none] scrollbar-none sm:gap-3 [&::-webkit-scrollbar]:hidden'
+                ? 'flex min-w-0 flex-1 gap-2 overflow-x-auto [-ms-overflow-style:none] scrollbar-none sm:gap-3 [&::-webkit-scrollbar]:hidden'
                 : 'grid grid-cols-1 gap-4 sm:grid-cols-2 sm:gap-6 lg:grid-cols-3'
             )}
           >
@@ -569,19 +609,21 @@ export function DashboardWidgets() {
                   }}
                   className={cn(
                     'relative shrink-0 cursor-pointer select-none text-left',
-                    'rounded-none border-4 border-white bg-[#121212]',
-                    'shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] transition-all duration-300',
+                    'rounded-none bg-[#121212]',
+                    'transition-all duration-300',
                     'focus-visible:outline-none focus-visible:ring-0',
                     'hover:shadow-[0_0_20px_var(--neon)] hover:border-white',
                     isActive ? 'border-[#BBFF00]' : 'border-white/40',
                     isRibbon
-                      ? 'size-[clamp(3.25rem,10vw,4rem)] p-0'
-                      : 'min-h-[clamp(10rem,28vw,11.25rem)] p-[clamp(1rem,3vw,1.5rem)]'
+                      ? 'size-[clamp(3.25rem,10vw,4rem)] p-0 border-2 shadow-[2px_2px_0px_0px_rgba(0,0,0,1)]'
+                      : 'min-h-[clamp(10rem,28vw,11.25rem)] p-[clamp(1rem,3vw,1.5rem)] border-4 shadow-[4px_4px_0px_0px_rgba(0,0,0,1)]'
                   )}
                   style={{
                     '--neon': `${box.accent}44`,
                     boxShadow: isActive
-                      ? `4px 4px 0px 0px ${box.accent}`
+                      ? isRibbon 
+                        ? `2px 2px 0px 0px ${box.accent}`
+                        : `4px 4px 0px 0px ${box.accent}`
                       : undefined,
                   } as any}
                   aria-pressed={isActive}
@@ -621,15 +663,15 @@ export function DashboardWidgets() {
               type="button"
               onClick={() => setActiveBox(null)}
               className={cn(
-                'shrink-0',
-                'size-[clamp(3.25rem,10vw,4rem)] rounded-none border-4 border-white bg-[#121212]',
-                'shadow-[4px_4px_0px_0px_rgba(0,0,0,1)]',
-                'hover:border-[#FF00FF] transition-colors',
-                'active:translate-x-[2px] active:translate-y-[2px] active:shadow-none'
+                'shrink-0 flex items-center justify-center',
+                'size-[clamp(3.25rem,10vw,4rem)] rounded-none border-2 border-white/40 bg-[#121212]',
+                'shadow-[2px_2px_0px_0px_rgba(0,0,0,1)]',
+                'hover:border-[#FF00FF] hover:text-[#FF00FF] transition-colors',
+                'active:translate-x-[1px] active:translate-y-[1px] active:shadow-none text-white'
               )}
               aria-label="Close focus view"
             >
-              <X className="mx-auto size-[clamp(1.25rem,4vw,1.75rem)] text-white" />
+              <X className="size-[clamp(1.25rem,4vw,1.75rem)]" />
             </button>
           ) : null}
         </div>
