@@ -13,7 +13,7 @@ export async function GET(req: NextRequest) {
 
     // Parallel fetch of all core data
     console.log('API_BATCH: STARTING_PARALLEL_FETCH');
-    const [manifest, ledger, settings] = await Promise.all([
+    const [manifest, ledger, settings, signals] = await Promise.all([
       getFileContent(drive, folderId, DRIVE_CONFIG.MANIFEST_FILE, {
         total_burn: 0,
         burn_rate: 0,
@@ -21,7 +21,8 @@ export async function GET(req: NextRequest) {
         last_updated: new Date().toISOString()
       }),
       getFileContent(drive, folderId, DRIVE_CONFIG.LEDGER_FILE, []),
-      getFileContent(drive, folderId, DRIVE_CONFIG.SETTINGS_FILE, {})
+      getFileContent(drive, folderId, DRIVE_CONFIG.SETTINGS_FILE, {}),
+      getFileContent(drive, folderId, DRIVE_CONFIG.SIGNALS_FILE, null)
     ]);
     console.log('API_BATCH: FETCH_COMPLETED');
 
@@ -29,6 +30,7 @@ export async function GET(req: NextRequest) {
       manifest: manifest.content,
       ledger: ledger.content,
       settings: settings.content,
+      signals: signals.content,
       syncTime: Date.now()
     });
   } catch (error: any) {

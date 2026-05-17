@@ -1,6 +1,6 @@
 'use client';
 
-import { useMemo, useState } from 'react';
+import { useMemo, useState, useEffect } from 'react';
 import { AnimatePresence, LayoutGroup, motion } from 'framer-motion';
 import type { LucideIcon } from 'lucide-react';
 import {
@@ -20,6 +20,7 @@ import { cn } from '@/lib/utils';
 import { useTerminalData } from '../hooks/useTerminalData';
 import { useAppStore } from '@/store/useAppStore';
 import { getCurrencySymbol, formatCurrency } from '@/lib/currencyUtils';
+import { computeDailySpendForMonth, getFallbackSignals, UnifiedSignalsMap } from '@/lib/signalsAnalysis';
 
 type DashboardBoxId = 1 | 2 | 3 | 4 | 5 | 6;
 
@@ -296,12 +297,13 @@ function AreaChart({ values, accent }: { values: number[]; accent: string }) {
   );
 }
 
-function Visualization({ box }: { box: DashboardBox }) {
+function Visualization({ box, dailySpend }: { box: DashboardBox; dailySpend?: number[] }) {
   if (box.id === 1) {
+    const values = dailySpend && dailySpend.length > 0 ? dailySpend : [100, 300, 200, 400, 800, 1200, 900, 1500, 2000, 1800, 2400, 3100];
     return (
       <LineChart
         accent={box.accent}
-        values={[800, 2200, 4100, 7600, 9800, 13100, 16200, 20150, 24800, 30100, 35600, 42900]}
+        values={values}
       />
     );
   }
@@ -386,13 +388,38 @@ function AllocationChart({ totals, categoryColors }: { totals: Record<string, nu
             SYSTEM_ALLOCATION
           </text>
         </PieChart>
-      </ResponsiveContainer>
+</ResponsiveContainer>
     </div>
   );
 }
 
-function DetailedAnalysis({ box, totals, baseCurrency, categoryColors, onClose }: { box: DashboardBox; totals: Record<string, number>; baseCurrency: string; categoryColors: Record<string, string>; onClose: () => void }) {
+function getSignalTag(widgetId: number, idx: number): string {
+  const tags: Record<number, string[]> = {
+    1: ["SPIKE", "FORECAST", "ACTION"],
+    2: ["BURN", "LEAK", "LIMIT"],
+    3: ["POWER", "ACCEL", "ACTION"],
+    4: ["SYNC", "INTEGRITY", "BACKUP"],
+    5: ["RADIUS", "VECTOR", "CONTAIN"],
+    6: ["OUTLOOK", "OVERFLOW", "PREVENT"]
+  };
+  return tags[widgetId]?.[idx] || "SIGNAL";
+}
+
+function DetailedAnalysis({ box, totals, baseCurrency, categoryColors, history, onClose }: { box: DashboardBox; totals: Record<string, number>; baseCurrency: string; categoryColors: Record<string, string>; history: any[]; onClose: () => void }) {
   const Icon = box.icon;
+  const { signals: cachedSignalsMap } = useTerminalData();
+
+  const { dailySpend, monthName } = useMemo(() => {
+    return computeDailySpendForMonth((history || []) as any[]);
+  }, [history]);
+
+  const activeSignals = useMemo(() => {
+    const key = `widget_${box.id}` as keyof UnifiedSignalsMap;
+    if (cachedSignalsMap && cachedSignalsMap[key]) {
+      return cachedSignalsMap[key];
+    }
+    return getFallbackSignals()[key];
+  }, [cachedSignalsMap, box.id]);
 
   return (
     <div className="relative h-full overflow-hidden">
@@ -413,8 +440,8 @@ function DetailedAnalysis({ box, totals, baseCurrency, categoryColors, onClose }
 
       <div className="flex flex-col items-start justify-between gap-4 sm:flex-row sm:items-start sm:gap-6">
         <div className="min-w-0">
-          <div className="text-[clamp(10px,2.8vw,12px)] font-bold tracking-widest text-white/70">
-            {box.name} // DETAIL
+          <div className="text-[clamp(10px,2.8vw,12px)] font-bold tracking-widest text-white/70 uppercase">
+            {box.name} {box.id === 1 ? `// ${monthName}` : '// DETAIL'}
           </div>
           <div className="mt-2 break-all text-[clamp(2rem,10vw,3.75rem)] font-black tracking-tight">
             {box.value}
@@ -446,7 +473,7 @@ function DetailedAnalysis({ box, totals, baseCurrency, categoryColors, onClose }
             VISUALIZATION
           </div>
           <div className="mt-4 bg-[#020202] rounded-lg overflow-hidden p-1 shadow-inner">
-            {box.id === 3 ? <AllocationChart totals={totals} categoryColors={categoryColors} /> : <Visualization box={box} />}
+            {box.id === 3 ? <AllocationChart totals={totals} categoryColors={categoryColors} /> : <Visualization box={box} dailySpend={dailySpend} />}
           </div>
         </motion.div>
 
@@ -457,39 +484,61 @@ function DetailedAnalysis({ box, totals, baseCurrency, categoryColors, onClose }
           className="bg-[#121212] p-[clamp(1.25rem,4vw,1.75rem)] shadow-[0_4px_24px_rgba(0,0,0,0.4)] lg:col-span-5"
         >
           <div className="text-[clamp(10px,2.8vw,12px)] font-bold tracking-widest text-white/60">
-            {box.id === 3 ? 'SYSTEM_LEGEND' : 'RECENT SIGNALS'}
+            {box.id === 3 ? 'SYSTEM_LEGEND' : 'AI DIAGNOSTIC SIGNALS'}
           </div>
           <div className="mt-4 space-y-1 text-[clamp(11px,2.8vw,12px)] text-white/70">
             {box.id === 3 ? (
-              Object.entries(totals)
-                .filter(([_, v]) => v > 0)
-                .map(([name, value], idx) => (
-                  <motion.div
-                    key={name}
-                    initial={{ opacity: 0, y: 10 }}
-                    animate={{ opacity: 1, y: 0 }}
-                    transition={{ delay: 0.4 + idx * 0.05 }}
-                    className="flex items-center justify-between border-b border-white/10 py-3 px-1"
-                  >
-                    <div className="flex items-center gap-3">
-                      <div className="size-3 rounded-full" style={{ backgroundColor: categoryColors[name] || '#888888' }} />
-                      <span className="font-bold tracking-widest">{name}</span>
-                    </div>
-                    <span className="font-mono text-[#BBFF00]">{formatCurrency(value, baseCurrency)}</span>
-                  </motion.div>
-                ))
+              <div className="space-y-4">
+                <div className="space-y-1">
+                  {Object.entries(totals)
+                    .filter(([_, v]) => v > 0)
+                    .map(([name, value], idx) => (
+                      <motion.div
+                        key={name}
+                        initial={{ opacity: 0, y: 10 }}
+                        animate={{ opacity: 1, y: 0 }}
+                        transition={{ delay: 0.4 + idx * 0.05 }}
+                        className="flex items-center justify-between border-b border-white/10 py-3 px-1"
+                      >
+                        <div className="flex items-center gap-3">
+                          <div className="size-3 rounded-full" style={{ backgroundColor: categoryColors[name] || '#888888' }} />
+                          <span className="font-bold tracking-widest">{name}</span>
+                        </div>
+                        <span className="font-mono text-[#BBFF00]">{formatCurrency(value, baseCurrency)}</span>
+                      </motion.div>
+                    ))}
+                </div>
+                <div className="pt-4 border-t border-white/10">
+                  <div className="text-[clamp(10px,2.8vw,12px)] font-bold tracking-widest text-white/50 mb-2 uppercase">
+                    AI FLEX DIAGNOSTIC
+                  </div>
+                  {activeSignals.map((sig, idx) => (
+                    <motion.div
+                      key={idx}
+                      initial={{ opacity: 0, y: 10 }}
+                      animate={{ opacity: 1, y: 0 }}
+                      transition={{ delay: 0.6 + idx * 0.1 }}
+                      className="border-b border-white/10 py-3 px-1 flex items-start gap-2.5 text-[clamp(10px,2.8vw,11px)]"
+                    >
+                      <span className="text-[#BBFF00] font-bold font-mono">[{getSignalTag(3, idx)}]</span>
+                      <span>{sig}</span>
+                    </motion.div>
+                  ))}
+                </div>
+              </div>
             ) : (
-              <>
-                <div className="border-b border-white/10 py-3 px-1">
-                  - spike detected near “FOOD”
-                </div>
-                <div className="border-b border-white/10 py-3 px-1">
-                  - vendor concentration trending up
-                </div>
-                <div className="border-b border-white/10 py-3 px-1">
-                  - variance increased week-over-week
-                </div>
-              </>
+              activeSignals.map((sig, idx) => (
+                <motion.div
+                  key={idx}
+                  initial={{ opacity: 0, y: 10 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{ delay: 0.2 + idx * 0.1 }}
+                  className="border-b border-white/10 py-3 px-1 flex items-start gap-2.5"
+                >
+                  <span className="text-[#BBFF00] font-bold font-mono">[{getSignalTag(box.id, idx)}]</span>
+                  <span>{sig}</span>
+                </motion.div>
+              ))
             )}
           </div>
         </motion.div>
@@ -695,7 +744,7 @@ export function DashboardWidgets() {
                 'lg:min-h-[560px]'
               )}
             >
-              <DetailedAnalysis box={active} totals={categoryTotals} baseCurrency={baseCurrency} categoryColors={categoryColors} onClose={() => setActiveBox(null)} />
+              <DetailedAnalysis box={active} totals={categoryTotals} baseCurrency={baseCurrency} categoryColors={categoryColors} history={data?.history || []} onClose={() => setActiveBox(null)} />
             </motion.div>
           ) : null}
         </AnimatePresence>

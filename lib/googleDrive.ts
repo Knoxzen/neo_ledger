@@ -6,6 +6,7 @@ export const DRIVE_CONFIG = {
   LEDGER_FILE: 'ledger_history.json',
   MANIFEST_FILE: 'manifest.json',
   SETTINGS_FILE: 'settings.json',
+  SIGNALS_FILE: 'signals.json',
 };
 
 export async function getDriveClient(manualToken?: string) {

@@ -15,5 +15,7 @@ export function useTerminalData() {
     refresh: context.refreshData,
     logTransaction: context.logTransaction,
     wipeoutData: context.wipeoutData,
+    signals: context.signals,
+    recalculateSignals: context.recalculateSignals,
   };
 }

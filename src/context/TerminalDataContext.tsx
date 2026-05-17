@@ -4,6 +4,7 @@ import React, { createContext, useContext, useEffect, useState, useCallback, use
 import { useSession } from 'next-auth/react';
 import { z } from 'zod';
 import { useAppStore } from '@/store/useAppStore';
+import { fetchUnifiedSignals, UnifiedSignalsMap } from '@/lib/signalsAnalysis';
 
 // --- SCHEMAS ---
 const TransactionSchema = z.object({
@@ -33,6 +34,7 @@ interface TerminalState {
   manifest: Manifest;
   ledgerHistory: Transaction[];
   settings: any;
+  signals: UnifiedSignalsMap | null;
   isHydrated: boolean;
   isSyncing: boolean;
   lastSyncTime: number | null;
@@ -43,6 +45,7 @@ interface TerminalContextType extends TerminalState {
   logTransaction: (input: string, apiKey?: string) => Promise<void>;
   refreshData: () => Promise<void>;
   wipeoutData: () => Promise<void>;
+  recalculateSignals: () => Promise<void>;
 }
 
 const TerminalDataContext = createContext<TerminalContextType | undefined>(undefined);
@@ -63,6 +66,7 @@ export function TerminalDataProvider({ children }: { children: React.ReactNode }
     manifest: INITIAL_MANIFEST,
     ledgerHistory: [],
     settings: {},
+    signals: null,
     isHydrated: false,
     isSyncing: false,
     lastSyncTime: null,
@@ -89,6 +93,39 @@ export function TerminalDataProvider({ children }: { children: React.ReactNode }
     }
   }, [status, (session as any)?.accessToken]);
 
+  const recalculateSignals = useCallback(async (customHistory?: Transaction[], customManifest?: Manifest) => {
+    const token = (session as any)?.accessToken;
+    const store = useAppStore.getState();
+    const apiKey = store.geminiApiKey || undefined;
+    const baseCurr = store.baseCurrency || 'INR';
+
+    const targetHistory = customHistory || state.ledgerHistory;
+    const targetManifest = customManifest || state.manifest;
+
+    console.log('RECALCULATING_FORECAST_SIGNALS...');
+    try {
+      const computed = await fetchUnifiedSignals(
+        targetHistory,
+        targetManifest,
+        baseCurr,
+        token || undefined,
+        apiKey
+      );
+
+      setState(prev => {
+        const updated = {
+          ...prev,
+          signals: computed
+        };
+        localStorage.setItem(STORAGE_KEY, JSON.stringify(updated));
+        return updated;
+      });
+      console.log('RECALCULATED_FORECAST_SIGNALS_SUCCESS');
+    } catch (err) {
+      console.error('RECALCULATE_SIGNALS_FAILED:', err);
+    }
+  }, [session?.accessToken, state.ledgerHistory, state.manifest]);
+
   const fetchInitialData = useCallback(async () => {
     const token = (session as any)?.accessToken;
     if (!token) return;
@@ -107,6 +144,7 @@ export function TerminalDataProvider({ children }: { children: React.ReactNode }
         manifest: data.manifest || INITIAL_MANIFEST,
         ledgerHistory: data.ledger || [],
         settings: data.settings || {},
+        signals: data.signals || null,
         lastSyncTime: Date.now(),
         isHydrated: true,
         isSyncing: false,
@@ -115,10 +153,17 @@ export function TerminalDataProvider({ children }: { children: React.ReactNode }
 
       setState(prev => ({ ...prev, ...newState }));
       localStorage.setItem(STORAGE_KEY, JSON.stringify(newState));
+
+      // Trigger automatic upfront analysis in the background if signals are missing
+      if (!data.signals && data.ledger) {
+        setTimeout(() => {
+          recalculateSignals(data.ledger, data.manifest || INITIAL_MANIFEST);
+        }, 1000);
+      }
     } catch (err: any) {
       setState(prev => ({ ...prev, isSyncing: false, error: err.message }));
     }
-  }, [session?.accessToken]);
+  }, [session?.accessToken, recalculateSignals]);
 
   const logTransaction = useCallback(async (input: string, apiKey?: string) => {
     // 1. Capture Snapshot for Rollback
@@ -177,21 +222,18 @@ export function TerminalDataProvider({ children }: { children: React.ReactNode }
       const entry: Transaction = data;
 
       // RE-CALIBRATE WITH REAL DATA
+      const parsedHistory = [entry, ...state.ledgerHistory.filter(h => !h.id.startsWith('TEMP_'))];
+      const parsedManifest = {
+        ...state.manifest,
+        total_burn: state.manifest.total_burn - estimatedAmount + entry.amount,
+        last_updated: new Date().toISOString()
+      };
+
       setState(prev => {
-        // Remove the temp entry and add the real one
-        const newHistory = [entry, ...prev.ledgerHistory.filter(h => !h.id.startsWith('TEMP_'))];
-        
-        // Correct the manifest (subtract estimate, add real)
-        const newManifest = {
-          ...prev.manifest,
-          total_burn: prev.manifest.total_burn - estimatedAmount + entry.amount,
-          last_updated: new Date().toISOString()
-        };
-        
         const updated = {
           ...prev,
-          manifest: newManifest,
-          ledgerHistory: newHistory,
+          manifest: parsedManifest,
+          ledgerHistory: parsedHistory,
         };
         
         localStorage.setItem(STORAGE_KEY, JSON.stringify(updated));
@@ -206,6 +248,8 @@ export function TerminalDataProvider({ children }: { children: React.ReactNode }
       }).then(res => {
         if (!res.ok) throw new Error('SAVE_FAILED');
         setState(prev => ({ ...prev, isSyncing: false }));
+        // Recalculate signals with updated data upfront!
+        recalculateSignals(parsedHistory, parsedManifest);
       }).catch(err => {
         console.error('BG_SAVE_FAILED:', err);
         setState(prev => ({ ...prev, error: 'ERROR_SYNC_FAILED', isSyncing: false }));
@@ -276,8 +320,9 @@ export function TerminalDataProvider({ children }: { children: React.ReactNode }
     ...state,
     logTransaction,
     refreshData: fetchInitialData,
-    wipeoutData
-  }), [state, logTransaction, fetchInitialData, wipeoutData]);
+    wipeoutData,
+    recalculateSignals
+  }), [state, logTransaction, fetchInitialData, wipeoutData, recalculateSignals]);
 
   return (
     <TerminalDataContext.Provider value={value}>
