@@ -11,6 +11,8 @@ import {
   Maximize2
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
+import { useAppStore } from '@/store/useAppStore';
+import { formatCurrency } from '@/lib/currencyUtils';
 
 // --- Types ---
 interface CategoryData {
@@ -37,7 +39,7 @@ function RibbonCard({ label, value, icon: Icon }: { label: string; value: string
         <span className="text-[10px] font-bold tracking-widest text-white/60">{label}</span>
         <Icon className="size-4 text-[#BBFF00]" />
       </div>
-      <div className="text-2xl font-black font-mono tracking-tighter text-white">#{value}</div>
+      <div className="text-2xl font-black font-mono tracking-tighter text-white">{value}</div>
     </div>
   );
 }
@@ -148,6 +150,7 @@ function VelocityGauge({ value }: { value: number }) {
 }
 
 export function Analytics() {
+  const { baseCurrency } = useAppStore();
   const [selectedCategory, setSelectedCategory] = useState<CategoryData | null>(null);
   const [timeRange, setTimeRange] = useState('1M');
   const [isGlitching, setIsGlitching] = useState(false);
@@ -169,8 +172,8 @@ export function Analytics() {
     <div className="flex flex-col gap-6 p-6 min-h-full">
       {/* Top Ribbon */}
       <div className="flex flex-wrap gap-4">
-        <RibbonCard label="MONTHLY PEAK" value="42,900" icon={ArrowUpRight} />
-        <RibbonCard label="NET VELOCITY" value="1,430" icon={Activity} />
+        <RibbonCard label="MONTHLY PEAK" value={formatCurrency(42900, baseCurrency)} icon={ArrowUpRight} />
+        <RibbonCard label="NET VELOCITY" value={formatCurrency(1430, baseCurrency)} icon={Activity} />
         <RibbonCard label="SAVINGS EFFICIENCY" value="64%" icon={ShieldCheck} />
       </div>
 
@@ -234,7 +237,7 @@ export function Analytics() {
                 style={{ backgroundColor: selectedCategory?.name === cat.name ? cat.color + '22' : 'transparent' }}
               >
                 <div className="text-[10px] font-black tracking-tighter" style={{ color: cat.color }}>{cat.name}</div>
-                <div className="mt-1 font-mono font-black text-sm">#{cat.value.toLocaleString()}</div>
+                <div className="mt-1 font-mono font-black text-sm">{formatCurrency(cat.value, baseCurrency)}</div>
                 {selectedCategory?.name === cat.name && (
                    <div className="absolute bottom-0 left-0 h-1 w-full" style={{ backgroundColor: cat.color }} />
                 )}
@@ -256,7 +259,7 @@ export function Analytics() {
                   <div key={cat.name} className="flex flex-col gap-2">
                     <div className="flex justify-between text-[10px] font-bold tracking-widest">
                       <span>{cat.name}</span>
-                      <span className="font-mono">#{cat.value}</span>
+                      <span className="font-mono">{formatCurrency(cat.value, baseCurrency)}</span>
                     </div>
                     <SegmentedProgress value={cat.value} max={15000} color={cat.color} />
                   </div>

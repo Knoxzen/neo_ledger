@@ -19,7 +19,7 @@ import { PieChart, Pie, Cell, ResponsiveContainer } from 'recharts';
 import { cn } from '@/lib/utils';
 import { useTerminalData } from '../hooks/useTerminalData';
 import { useAppStore } from '@/store/useAppStore';
-import { getCurrencySymbol } from '@/lib/currencyUtils';
+import { getCurrencySymbol, formatCurrency } from '@/lib/currencyUtils';
 
 type DashboardBoxId = 1 | 2 | 3 | 4 | 5 | 6;
 
@@ -356,7 +356,7 @@ function AllocationChart({ totals }: { totals: Record<string, number> }) {
   );
 }
 
-function DetailedAnalysis({ box, totals, symbol, onClose }: { box: DashboardBox; totals: Record<string, number>; symbol: string; onClose: () => void }) {
+function DetailedAnalysis({ box, totals, baseCurrency, onClose }: { box: DashboardBox; totals: Record<string, number>; baseCurrency: string; onClose: () => void }) {
   const Icon = box.icon;
 
   return (
@@ -440,7 +440,7 @@ function DetailedAnalysis({ box, totals, symbol, onClose }: { box: DashboardBox;
                       <div className="size-3" style={{ backgroundColor: CATEGORY_COLORS[name] || '#888888' }} />
                       <span className="font-bold tracking-widest">{name}</span>
                     </div>
-                    <span className="font-mono text-[#BBFF00]">{symbol}{value.toLocaleString()}</span>
+                    <span className="font-mono text-[#BBFF00]">{formatCurrency(value, baseCurrency)}</span>
                   </motion.div>
                 ))
             ) : (
@@ -497,7 +497,7 @@ export function DashboardWidgets() {
       {
         id: 1,
         name: 'TOTAL BURN',
-        value: isLoading ? '...' : `${currencySymbol}${(data?.manifest?.total_burn || 0).toLocaleString()}`,
+        value: isLoading ? '...' : formatCurrency(data?.manifest?.total_burn || 0, baseCurrency),
         description: 'Global spending from Drive ledger.',
         accent: '#BBFF00',
         icon: getBoxIcon(1),
@@ -505,7 +505,7 @@ export function DashboardWidgets() {
       {
         id: 2,
         name: 'DAILY AVG',
-        value: isLoading ? '...' : `${currencySymbol}${(data?.manifest?.burn_rate || 0).toLocaleString(undefined, { maximumFractionDigits: 0 })}/DAY`,
+        value: isLoading ? '...' : `${formatCurrency(data?.manifest?.burn_rate || 0, baseCurrency, { maximumFractionDigits: 0 })}/DAY`,
         description: 'Average daily burn rate (Drive sync).',
         accent: '#FFFFFF',
         icon: getBoxIcon(2),
@@ -514,7 +514,7 @@ export function DashboardWidgets() {
         id: 3,
         name: 'TOP_FLEX_PROTOCOL',
         value: isLoading ? '...' : topCategory,
-        description: isLoading ? 'Computing...' : `${currencySymbol}${topCategoryTotal.toLocaleString()} // ${topCategoryPercent}% OF TOTAL BURN`,
+        description: isLoading ? 'Computing...' : `${formatCurrency(topCategoryTotal, baseCurrency)} // ${topCategoryPercent}% OF TOTAL BURN`,
         accent: '#FF00FF',
         icon: getBoxIcon(3),
       },
@@ -660,7 +660,7 @@ export function DashboardWidgets() {
                 'lg:min-h-[560px]'
               )}
             >
-              <DetailedAnalysis box={active} totals={categoryTotals} symbol={currencySymbol} onClose={() => setActiveBox(null)} />
+              <DetailedAnalysis box={active} totals={categoryTotals} baseCurrency={baseCurrency} onClose={() => setActiveBox(null)} />
             </motion.div>
           ) : null}
         </AnimatePresence>
