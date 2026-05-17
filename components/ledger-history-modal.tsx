@@ -1,5 +1,18 @@
 import React, { useState, useMemo } from 'react';
 import { formatCurrency } from '@/lib/currencyUtils';
+import { format } from "date-fns";
+import { Calendar as CalendarIcon } from "lucide-react";
+import { DateRange } from "react-day-picker";
+
+import { cn } from "@/lib/utils";
+import { Button } from "@/components/ui/button";
+import { Calendar } from "@/components/ui/calendar";
+import { Numpad } from "@/components/ui/numpad";
+import {
+  Popover,
+  PopoverContent,
+  PopoverTrigger,
+} from "@/components/ui/popover";
 
 interface Transaction {
   id: string;
@@ -26,8 +39,7 @@ export function LedgerHistoryModal({ isOpen, onClose, transactions, baseCurrency
   const [tagFilter, setTagFilter] = useState('');
   const [minAmount, setMinAmount] = useState('');
   const [maxAmount, setMaxAmount] = useState('');
-  const [startDate, setStartDate] = useState('');
-  const [endDate, setEndDate] = useState('');
+  const [date, setDate] = useState<DateRange | undefined>();
 
   const filteredTransactions = useMemo(() => {
     return transactions.filter(t => {
@@ -45,22 +57,22 @@ export function LedgerHistoryModal({ isOpen, onClose, transactions, baseCurrency
       if (maxAmount && t.amount > Number(maxAmount)) return false;
       
       // Date filter
-      if (startDate) {
+      if (date?.from) {
         // Normalize the start date to 00:00:00 local time
-        const start = new Date(startDate);
+        const start = new Date(date.from);
         start.setHours(0, 0, 0, 0);
         if (new Date(t.timestamp) < start) return false;
       }
-      if (endDate) {
+      if (date?.to) {
         // Normalize the end date to 23:59:59 local time
-        const end = new Date(endDate);
+        const end = new Date(date.to);
         end.setHours(23, 59, 59, 999);
         if (new Date(t.timestamp) > end) return false;
       }
 
       return true;
     });
-  }, [transactions, tagFilter, minAmount, maxAmount, startDate, endDate]);
+  }, [transactions, tagFilter, minAmount, maxAmount, date]);
 
   if (!isOpen) return null;
 
@@ -84,42 +96,80 @@ export function LedgerHistoryModal({ isOpen, onClose, transactions, baseCurrency
         {/* Date Range */}
         <div className="flex flex-col gap-2">
           <label className="text-[10px] font-bold text-[#BBFF00] tracking-widest uppercase">DATE_RANGE</label>
-          <div className="flex gap-2">
-            <input 
-              type="date" 
-              value={startDate}
-              onChange={(e) => setStartDate(e.target.value)}
-              className="bg-black border border-white/20 text-white p-2 text-xs w-full focus:border-[#BBFF00] outline-none" 
-            />
-            <span className="text-white/50 self-center">-</span>
-            <input 
-              type="date" 
-              value={endDate}
-              onChange={(e) => setEndDate(e.target.value)}
-              className="bg-black border border-white/20 text-white p-2 text-xs w-full focus:border-[#BBFF00] outline-none" 
-            />
-          </div>
+          <Popover>
+            <PopoverTrigger asChild>
+              <Button
+                id="date"
+                variant={"outline"}
+                className={cn(
+                  "bg-black border border-white/20 text-white p-2 text-xs w-full focus:border-[#BBFF00] outline-none justify-start text-left font-normal h-auto hover:bg-white/5 hover:text-white rounded-none",
+                  !date && "text-white/50"
+                )}
+              >
+                <CalendarIcon className="mr-2 h-4 w-4" />
+                {date?.from ? (
+                  date.to ? (
+                    <>
+                      {format(date.from, "LLL dd, y")} -{" "}
+                      {format(date.to, "LLL dd, y")}
+                    </>
+                  ) : (
+                    format(date.from, "LLL dd, y")
+                  )
+                ) : (
+                  <span>Pick a date</span>
+                )}
+              </Button>
+            </PopoverTrigger>
+            <PopoverContent className="w-auto p-0" align="start">
+              <Calendar
+                mode="range"
+                defaultMonth={date?.from}
+                selected={date}
+                onSelect={setDate}
+                numberOfMonths={2}
+              />
+            </PopoverContent>
+          </Popover>
         </div>
 
         {/* Amount Range */}
         <div className="flex flex-col gap-2">
           <label className="text-[10px] font-bold text-[#BBFF00] tracking-widest uppercase">AMOUNT_RANGE</label>
           <div className="flex gap-2">
-            <input 
-              type="number" 
-              placeholder="MIN"
-              value={minAmount}
-              onChange={(e) => setMinAmount(e.target.value)}
-              className="bg-black border border-white/20 text-white p-2 text-xs w-full focus:border-[#BBFF00] outline-none" 
-            />
+            <Popover>
+              <PopoverTrigger asChild>
+                <Button
+                  variant="outline"
+                  className={cn(
+                    "bg-black border border-white/20 text-white p-2 text-xs w-full focus:border-[#BBFF00] outline-none justify-start text-left font-normal h-auto hover:bg-white/5 hover:text-white rounded-none",
+                    !minAmount && "text-white/50"
+                  )}
+                >
+                  {minAmount ? formatCurrency(Number(minAmount), baseCurrency) : "MIN"}
+                </Button>
+              </PopoverTrigger>
+              <PopoverContent className="w-auto p-0 border-none bg-transparent shadow-none" align="start">
+                <Numpad value={minAmount} onChange={setMinAmount} />
+              </PopoverContent>
+            </Popover>
             <span className="text-white/50 self-center">-</span>
-            <input 
-              type="number" 
-              placeholder="MAX"
-              value={maxAmount}
-              onChange={(e) => setMaxAmount(e.target.value)}
-              className="bg-black border border-white/20 text-white p-2 text-xs w-full focus:border-[#BBFF00] outline-none" 
-            />
+            <Popover>
+              <PopoverTrigger asChild>
+                <Button
+                  variant="outline"
+                  className={cn(
+                    "bg-black border border-white/20 text-white p-2 text-xs w-full focus:border-[#BBFF00] outline-none justify-start text-left font-normal h-auto hover:bg-white/5 hover:text-white rounded-none",
+                    !maxAmount && "text-white/50"
+                  )}
+                >
+                  {maxAmount ? formatCurrency(Number(maxAmount), baseCurrency) : "MAX"}
+                </Button>
+              </PopoverTrigger>
+              <PopoverContent className="w-auto p-0 border-none bg-transparent shadow-none" align="start">
+                <Numpad value={maxAmount} onChange={setMaxAmount} />
+              </PopoverContent>
+            </Popover>
           </div>
         </div>
 
